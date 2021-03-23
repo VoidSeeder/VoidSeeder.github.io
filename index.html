@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="game.css">
+</head>
+
+<body>
+	<div class="configs">
+		<button id="increase">Larger</button>
+		<button id="decrease">Smaller</button>
+		<button id="newGame">New Game</button>
+	</div>
+	<div class="score">
+		<p id="score"></p>
+	</div>
+	<div class="game">
+		<canvas id="gameScreen" width="600" height="600"></canvas>
+	</div>
+
+	<script type="module">
+		import startGame from './game.js';
+		import newKeyboardListner from './keyboard.js';
+		import newGraphicCanvas from './graphic.js';
+
+		window.onload = () => {
+			const initialTableSize = 4;
+
+			var runningGame = gameInstance(window, initialTableSize);
+
+			var tableSize = {
+				value: initialTableSize,
+				max: 40,
+				min: 2,
+				increase() {
+					if (this.value < this.max) {
+						this.value += 1;
+
+						runningGame.newTableSize(this.value);
+					}
+				},
+				decrease() {
+					if (this.value > this.min) {
+						this.value -= 1;
+
+						runningGame.newTableSize(this.value);
+					}
+				}
+			};
+
+			const increaseButton = window.document.getElementById("increase");
+			const decreaseButton = window.document.getElementById("decrease");
+			const newGameButton = window.document.getElementById("newGame");
+
+			increaseButton.onclick = () => { tableSize.increase() };
+			decreaseButton.onclick = () => { tableSize.decrease() };
+			newGameButton.onclick = () => { runningGame.newTableSize(tableSize.value) };
+		}
+
+		//subject instancia de jogo
+		function gameInstance(windowInput, initialSize) {
+			const gameGraphic = newGraphicCanvas(windowInput, "gameScreen");
+			const gameState = startGame(initialSize);
+			const keyboardListner = newKeyboardListner();
+
+			function newTableSize(newSize) {
+				//const printSize = windowInput.document.getElementById("tableSizeOutput");
+				//printSize.innerText = `${newSize}x${newSize}`;
+
+				gameState.resize(newSize);
+			}
+
+			function newGame(initialSize) {
+				gameState.subscribe(gameGraphic.stateUpdate);
+				gameState.subscribe((stateObj) => {
+					windowInput.document.getElementById("score").innerText = `${stateObj.score}`;
+				});
+				keyboardListner.subscribe(gameState.move);
+				windowInput.requestAnimationFrame(gameGraphic.newFrame);
+			}
+
+			newGame(initialSize);
+			newTableSize(initialSize);
+
+			return {
+				newTableSize
+			};
+		}
+
+	</script>
+</body>
+
+</html>
