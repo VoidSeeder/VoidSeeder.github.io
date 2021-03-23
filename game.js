@@ -48,13 +48,13 @@ export default function startGame(initialSize) {
 		let position = newBlock(game);
 		notifyAll({
 			size: game.size, grid: game.grid, score: game.score,
-			type: 'appear', in: { x: position.x, y: position.y}, value: game.grid[position.x][position.y]
+			type: 'appear', in: { x: position.x, y: position.y }, value: game.grid[position.x][position.y]
 		});
 
 		position = newBlock(game);
 		notifyAll({
 			size: game.size, grid: game.grid, score: game.score,
-			type: 'appear', in: { x: position.x, y: position.y}, value: game.grid[position.x][position.y]
+			type: 'appear', in: { x: position.x, y: position.y }, value: game.grid[position.x][position.y]
 		});
 
 		//notifyAll({ size: game.size, grid: game.grid, score: game.score });
@@ -75,10 +75,10 @@ export default function startGame(initialSize) {
 			for (let line in game.grid) {
 				for (let column in game.grid[line]) {
 					game.grid[line][column] = previousState.grid[line][column];
-					
+
 					notifyAll({
 						size: game.size, grid: game.grid, score: game.score,
-						type: 'appear', in: { x: line, y: column}, value: game.grid[line][column]
+						type: 'appear', in: { x: Number(line), y: Number(column) }, value: game.grid[line][column]
 					});
 				}
 			}
@@ -111,7 +111,7 @@ export default function startGame(initialSize) {
 
 			notifyAll({
 				size: game.size, grid: game.grid, score: game.score,
-				type: 'move', from: { x: x2, y: y2 }, to: { x: x1, y: y1 }, value: game.grid[x1][y1]
+				type: 'move', from: { x: Number(x2), y: Number(y2) }, to: { x: Number(x1), y: Number(y1) }, value: game.grid[x1][y1]
 			});
 		}
 
@@ -128,7 +128,7 @@ export default function startGame(initialSize) {
 
 			notifyAll({
 				size: game.size, grid: game.grid, score: game.score,
-				type: 'join', to: { x: xIn, y: yIn }, from: { x: xErase, y: yErase }, value: game.grid[xIn][yIn] - 1
+				type: 'join', to: { x: Number(xIn), y: Number(yIn) }, from: { x: Number(xErase), y: Number(yErase) }, value: game.grid[xIn][yIn] - 1
 			});
 		}
 
@@ -136,7 +136,7 @@ export default function startGame(initialSize) {
 			const position = newBlock(game);
 			notifyAll({
 				size: game.size, grid: game.grid, score: game.score,
-				type: 'appear', in: { x: position.x, y: position.y}, value: game.grid[position.x][position.y]
+				type: 'appear', in: { x: Number(position.x), y: Number(position.y) }, value: game.grid[position.x][position.y]
 			});
 		}
 

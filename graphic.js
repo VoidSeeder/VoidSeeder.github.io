@@ -22,40 +22,75 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		if (gameStateObj.type) {
 			const moveTypes = {
 				move() {
+					let position = 0;
+
+					for (position = position; position < animationsList.length; position++) {
+						if (animationsList[position]) {
+							if (animationsList[position].type == 'move') {
+								break;
+							}
+						} else {
+							break;
+						}
+					}
+
+					if (position != animationsList.length) {
+						for (position = position; position < animationsList.length; position++) {
+							if (animationsList[position] &&
+								animationsList[position].to &&
+								animationsList[position].to.x == gameStateObj.from.x &&
+								animationsList[position].to.y == gameStateObj.from.y) {
+
+								animationsList.push({
+									type: gameStateObj.type,
+									from: gameStateObj.from,
+									to: gameStateObj.to,
+									value: gameStateObj.value,
+									progress: 0,
+									isActive: false,
+									subordinate: null
+								});
+
+								animationsList[position].subordinate = (animationsList.length - 1) - position;
+
+								return;
+							}
+						}
+					}
+
 					animationsList.push({
 						type: gameStateObj.type,
 						from: gameStateObj.from,
 						to: gameStateObj.to,
 						value: gameStateObj.value,
-						progress: 0
+						progress: 0,
+						isActive: true,
+						subordinate: null
 					});
 				},
 				join() {
-					animationsList.push({
-						type: gameStateObj.type,
-						from: gameStateObj.from,
-						to: gameStateObj.to,
-						value: gameStateObj.value,
-						progress: 0
-					});
+					this.move();
 				},
 				appear() {
 					animationsList.push({
 						type: gameStateObj.type,
 						in: gameStateObj.in,
 						value: gameStateObj.value,
-						progress: 0
+						progress: 0,
+						isActive: false,
+						subordinate: null
 					});
 				},
 				newGame() {
 					for (let position = 0; position < state.size; position++) {
+						animationsList = [];
 						state.grid[position] = new Array(state.size);
 						state.grid[position].fill(0);
 					}
 				}
 			}
 
-			if(moveTypes[gameStateObj.type]) {
+			if (moveTypes[gameStateObj.type]) {
 				moveTypes[gameStateObj.type]();
 			}
 		}
@@ -81,20 +116,29 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		screen.textBaseline = 'middle';
 		screen.textAlign = 'center';
 
+		//0 2 4 8 16 32 64 128 512 1024 2048 4096
+		const colorPallet = ["#cdc0b4", "#eee4da", "#ede0c8", "#f2b179", "#f59563", "#f67c5f", "#f65e3b", "#edcf72", "#edcc61", "#edc850", "#edc53f", "#edc22e", "#3c3a32"];
+
 		const color = {
-			background: 'darkgray',
-			emptyBlock: 'white',
-			notEmptyBlock(value) {
-				return `rgb(
-                    ${(2 ** value <= 2048) ? (255) : (0)},
-                    ${(2 ** value <= 2048) ? (200 - Math.floor(mapping(value, 0, Math.log2(2048), 0, 200))) : (0)},
-                    ${(2 ** value <= 2048) ? (200 - Math.floor(mapping(value, 0, Math.log2(2048), 0, 200))) : (0)}
-                )`;
+			background: "#bbada0",
+			//emptyBlock: 'white',
+			block(value) {
+				if (value < 11) {
+					return colorPallet[value];
+				} else {
+					return colorPallet[11];
+				}
 			},
-			text: 'white'
+			text(value) {
+				if (value < 3) {
+					return "#222222";
+				} else {
+					return "#f9f6f2";
+				}
+			}
 		}
 
-		screen.fillStyle = "darkgray";
+		screen.fillStyle = color.background;
 		screen.fillRect(0, 0, canvas.width, canvas.height);
 
 		for (let line in state.grid) {
@@ -106,65 +150,64 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		runAnimations();
 
 		function runAnimations() {
-			const animation = animationsList[0];
-			const animationStep = 50;
+			const animationStep = 100 / 2;
 
 			const moves = {
-				move() {
+				move(animationObj) {
 					//printa o bloco em movimento
-					if (animation.to.x != animation.from.x) {
+					if (animationObj.to.x != animationObj.from.x) {
 						//vertical
-						let progressRelation = (animation.to.x > animation.from.x) ? (animation.progress) : (100 - animation.progress);
-						let blocksToMove = (Math.abs(animation.to.x - animation.from.x)) * (progressRelation) / 100;
-						let absoluteBlockPosition = (animation.to.x > animation.from.x) ? (animation.from.x + blocksToMove) : (animation.to.x + blocksToMove);
+						let progressRelation = (animationObj.to.x > animationObj.from.x) ? (animationObj.progress) : (100 - animationObj.progress);
+						let blocksToMove = (Math.abs(animationObj.to.x - animationObj.from.x)) * (progressRelation) / 100;
+						let absoluteBlockPosition = (animationObj.to.x > animationObj.from.x) ? (animationObj.from.x + blocksToMove) : (animationObj.to.x + blocksToMove);
 
-						printBlock(absoluteBlockPosition, animation.to.y, animation.value);
+						printBlock(absoluteBlockPosition, animationObj.to.y, animationObj.value);
 					} else {
 						//horizontal
-						let progressRelation = (animation.to.y > animation.from.y) ? (animation.progress) : (100 - animation.progress);
-						let blocksToMove = (Math.abs(animation.to.y - animation.from.y)) * (progressRelation) / 100;
-						let absoluteBlockPosition = (animation.to.y > animation.from.y) ? (animation.from.y + blocksToMove) : (animation.to.y + blocksToMove);
+						let progressRelation = (animationObj.to.y > animationObj.from.y) ? (animationObj.progress) : (100 - animationObj.progress);
+						let blocksToMove = (Math.abs(animationObj.to.y - animationObj.from.y)) * (progressRelation) / 100;
+						let absoluteBlockPosition = (animationObj.to.y > animationObj.from.y) ? (animationObj.from.y + blocksToMove) : (animationObj.to.y + blocksToMove);
 
-						printBlock(animation.to.x, absoluteBlockPosition, animation.value);
+						printBlock(animationObj.to.x, absoluteBlockPosition, animationObj.value);
 					}
 				},
-				join() {
+				join(animationObj) {
 					//printa o bloco em movimento
-					if (animation.to.x != animation.from.x) {
+					if (animationObj.to.x != animationObj.from.x) {
 						//vertical
-						let progressRelation = (animation.to.x > animation.from.x) ? (animation.progress) : (100 - animation.progress);
-						let blocksToMove = (Math.abs(animation.to.x - animation.from.x)) * (progressRelation) / 100;
-						let absoluteBlockPosition = (animation.to.x > animation.from.x) ? (animation.from.x + blocksToMove) : (animation.to.x + blocksToMove);
+						let progressRelation = (animationObj.to.x > animationObj.from.x) ? (animationObj.progress) : (100 - animationObj.progress);
+						let blocksToMove = (Math.abs(animationObj.to.x - animationObj.from.x)) * (progressRelation) / 100;
+						let absoluteBlockPosition = (animationObj.to.x > animationObj.from.x) ? (animationObj.from.x + blocksToMove) : (animationObj.to.x + blocksToMove);
 
-						printBlock(absoluteBlockPosition, animation.to.y, animation.value);
+						printBlock(absoluteBlockPosition, animationObj.to.y, animationObj.value);
 					} else {
 						//horizontal
-						let progressRelation = (animation.to.y > animation.from.y) ? (animation.progress) : (100 - animation.progress);
-						let blocksToMove = (Math.abs(animation.to.y - animation.from.y)) * (progressRelation) / 100;
-						let absoluteBlockPosition = (animation.to.y > animation.from.y) ? (animation.from.y + blocksToMove) : (animation.to.y + blocksToMove);
+						let progressRelation = (animationObj.to.y > animationObj.from.y) ? (animationObj.progress) : (100 - animationObj.progress);
+						let blocksToMove = (Math.abs(animationObj.to.y - animationObj.from.y)) * (progressRelation) / 100;
+						let absoluteBlockPosition = (animationObj.to.y > animationObj.from.y) ? (animationObj.from.y + blocksToMove) : (animationObj.to.y + blocksToMove);
 
-						printBlock(animation.to.x, absoluteBlockPosition, animation.value);
+						printBlock(animationObj.to.x, absoluteBlockPosition, animationObj.value);
 					}
 
 					//printa o bloco novo
-					printBlock(animation.to.x, animation.to.y, animation.value);
+					printBlock(animationObj.to.x, animationObj.to.y, animationObj.value);
 
 					let size = block.size.width + 2 * block.space;
 
 					//penultimo passo
-					if (animation.progress + (3 * animationStep) >= 100) {
-						printBlock(animation.to.x, animation.to.y, animation.value, size, size);
+					if (animationObj.progress + (3 * animationStep) >= 100) {
+						printBlock(animationObj.to.x, animationObj.to.y, animationObj.value, size, size);
 					}
 
 					//ultimo passo
-					if (animation.progress + animationStep >= 100) {
+					if (animationObj.progress + animationStep >= 100) {
 
-						printBlock(animation.to.x, animation.to.y, animation.value + 1, size, size);
+						printBlock(animationObj.to.x, animationObj.to.y, animationObj.value + 1, size, size);
 					}
 				},
-				appear() {
-					let size = block.size.width * animation.progress / 100;
-					printBlock(animation.in.x, animation.in.y, animation.value, size, size);
+				appear(animationObj) {
+					let size = block.size.width * animationObj.progress / 100;
+					printBlock(animationObj.in.x, animationObj.in.y, animationObj.value, size, size);
 				}
 			}
 
@@ -192,22 +235,38 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				}
 			}
 
-			if (animation) {
+			for (let animation of animationsList) {
+				if (animation.isActive == false) {
+					continue;
+				}
+
 				if (animation.progress == 0) {
 					begin[animation.type](animation);
 				}
 
 				if (moves[animation.type]) {
-					moves[animation.type]();
+					moves[animation.type](animation);
 				}
 
 				animation.progress += animationStep;
 
 				if (animation.progress >= 100) {
-					console.log(`animated ${animationsList[0].type}`);
+					console.log(`animated ${animation.type}`);
 					finish[animation.type](animation);
-					animationsList.shift();
+					animation.isActive = false;
 				}
+			}
+
+			if (animationsList[0] && animationsList[0].type == 'appear') {
+				animationsList[0].isActive = true;
+			}
+
+			while (animationsList[0] && animationsList[0].progress >= 100) {
+				if (animationsList[0].subordinate) {
+					animationsList[animationsList[0].subordinate].isActive = true;
+				}
+
+				animationsList.shift();
 			}
 		}
 
@@ -226,15 +285,16 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				y: printParam.init.y + (printParam.size.height / 2)
 			}
 
+			screen.fillStyle = color.block(value);
+
+			printParam.init.x += (block.size.width / 2) - (width / 2);
+			printParam.init.y += (block.size.height / 2) - (height / 2);
+
+			//screen.fillRect(printParam.init.x, printParam.init.y, width, height);
+			screen.fillRoundRect(printParam.init.x, printParam.init.y, width, height, 8);
+
 			if (value != 0) {
-				screen.fillStyle = color.notEmptyBlock(value);
-
-				printParam.init.x += (block.size.width / 2) - (width / 2);
-				printParam.init.y += (block.size.height / 2) - (height / 2);
-
-				screen.fillRect(printParam.init.x, printParam.init.y, width, height);
-
-				screen.fillStyle = color.text;
+				screen.fillStyle = color.text(value);
 				if (String(2 ** value).length < 3) {
 					screen.font = `bold ${(2 / 3) * height}px Arial`;
 					screen.fillText(String(2 ** value), printParam.textPosition.x, printParam.textPosition.y);
@@ -242,9 +302,6 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 					screen.font = `bold ${(2 / String(2 ** value).length) * (2 / 3) * height}px Arial`;
 					screen.fillText(String(2 ** value), printParam.textPosition.x, printParam.textPosition.y);
 				}
-			} else {
-				screen.fillStyle = color.emptyBlock;
-				screen.fillRect(printParam.init.x, printParam.init.y, printParam.size.width, printParam.size.height);
 			}
 		}
 
@@ -255,4 +312,18 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		stateUpdate,
 		newFrame
 	}
+}
+
+CanvasRenderingContext2D.prototype.fillRoundRect = function (x, y, width, height, radius) {
+	if (width < 2 * radius) radius = width / 2;
+	if (height < 2 * radius) radius = height / 2;
+	this.beginPath();
+	this.moveTo(x + radius, y);
+	this.arcTo(x + width, y, x + width, y + height, radius);
+	this.arcTo(x + width, y + height, x, y + height, radius);
+	this.arcTo(x, y + height, x, y, radius);
+	this.arcTo(x, y, x + width, y, radius);
+	this.closePath();
+	this.fill();
+	return this;
 }
