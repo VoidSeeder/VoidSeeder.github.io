@@ -70,6 +70,8 @@ export default function startGame(initialSize) {
 				type: 'newGame'
 			});
 
+			game.score = previousState.score;
+
 			for (let line in game.grid) {
 				for (let column in game.grid[line]) {
 					game.grid[line][column] = previousState.grid[line][column];
@@ -80,10 +82,6 @@ export default function startGame(initialSize) {
 					});
 				}
 			}
-
-			game.score = previousState.score;
-
-			//notifyAll({ size: game.size, grid: game.grid, score: game.score });
 		}
 
 		function saveState() {
