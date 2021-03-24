@@ -87,6 +87,20 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 						state.grid[position] = new Array(state.size);
 						state.grid[position].fill(0);
 					}
+				},
+				newAction() {
+					//apagar todas as animações vigentes e iniciar uma nova cadeia de animações
+					for(let animation of animationsList) {
+						if(animation.to) {
+							state.grid[animation.to.x][animation.to.y] = animation.value;
+							state.grid[animation.from.x][animation.from.y] = 0;
+						}
+						if(animation.in) {
+							state.grid[animation.in.x][animation.in.y] = animation.value;
+						}
+					}
+
+					animationsList = [];
 				}
 			}
 
@@ -251,7 +265,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				animation.progress += animationStep;
 
 				if (animation.progress >= 100) {
-					console.log(`animated ${animation.type}`);
+					//console.log(`animated ${animation.type}`);
 					finish[animation.type](animation);
 					animation.isActive = false;
 				}

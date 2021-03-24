@@ -103,6 +103,10 @@ export default function startGame(initialSize) {
 				saveState();
 				firstMove = false;
 				hasUpdated = true;
+				notifyAll({
+					size: game.size, grid: game.grid, score: game.score,
+					type: 'newAction'
+				});
 			}
 
 			const aux = game.grid[x1][y1];
@@ -120,6 +124,10 @@ export default function startGame(initialSize) {
 				saveState();
 				firstMove = false;
 				hasUpdated = true;
+				notifyAll({
+					size: game.size, grid: game.grid, score: game.score,
+					type: 'newAction'
+				});
 			}
 
 			game.grid[xIn][yIn] += 1;
