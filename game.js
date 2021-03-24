@@ -70,6 +70,11 @@ export default function startGame(initialSize) {
 				type: 'newGame'
 			});
 
+			notifyAll({
+				size: game.size, grid: game.grid, score: game.score,
+				type: 'newAction'
+			});
+
 			game.score = previousState.score;
 
 			for (let line in game.grid) {

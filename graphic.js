@@ -10,7 +10,16 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		grid: []
 	}
 
-	let animationsList = [];
+	let animationsList = {
+		firstMoves: [],
+		joins: [],
+		lastMoves: [],
+		appears: []
+	};
+
+	let nameAddAnimations = 'firstMoves';
+	let nameRunningAnimations = 'firstMoves';
+	let isAnimationsActive = false;
 
 	function stateUpdate(gameStateObj) {
 		if (state.size != gameStateObj.size) {
@@ -19,46 +28,56 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			state.grid = new Array(state.size);
 		}
 
+		function addMoveAnimation() {
+			let position = animationsList[nameAddAnimations].length - 1;
+
+			if (animationsList[nameAddAnimations][position] &&
+				animationsList[nameAddAnimations][position].to.x == gameStateObj.from.x &&
+				animationsList[nameAddAnimations][position].to.y == gameStateObj.from.y) {
+
+				animationsList[nameAddAnimations].push({
+					type: gameStateObj.type,
+					from: gameStateObj.from,
+					to: gameStateObj.to,
+					value: gameStateObj.value,
+					progress: 0,
+					isActive: false,
+					subordinate: null
+				});
+
+				animationsList[nameAddAnimations][position].subordinate = 1;
+
+				return;
+			}
+
+			animationsList[nameAddAnimations].push({
+				type: gameStateObj.type,
+				from: gameStateObj.from,
+				to: gameStateObj.to,
+				value: gameStateObj.value,
+				progress: 0,
+				isActive: true,
+				subordinate: null
+			});
+		}
+
 		if (gameStateObj.type) {
 			const moveTypes = {
 				move() {
-					let position = 0;
-
-					for (position = position; position < animationsList.length; position++) {
-						if (animationsList[position]) {
-							if (animationsList[position].type == 'move') {
-								break;
-							}
-						} else {
-							break;
-						}
+					if (nameAddAnimations == 'joins') {
+						nameAddAnimations = 'lastMoves';
+					} else if(nameAddAnimations == 'appears') {
+						nameAddAnimations = 'firstMoves';
 					}
 
-					if (position != animationsList.length) {
-						for (position = position; position < animationsList.length; position++) {
-							if (animationsList[position] &&
-								animationsList[position].to &&
-								animationsList[position].to.x == gameStateObj.from.x &&
-								animationsList[position].to.y == gameStateObj.from.y) {
-
-								animationsList.push({
-									type: gameStateObj.type,
-									from: gameStateObj.from,
-									to: gameStateObj.to,
-									value: gameStateObj.value,
-									progress: 0,
-									isActive: false,
-									subordinate: null
-								});
-
-								animationsList[position].subordinate = (animationsList.length - 1) - position;
-
-								return;
-							}
-						}
+					addMoveAnimation();
+				},
+				join() {
+					if (nameAddAnimations == 'firstMoves') {
+						nameAddAnimations = 'joins';
 					}
 
-					animationsList.push({
+					animationsList[nameAddAnimations].push({
 						type: gameStateObj.type,
 						from: gameStateObj.from,
 						to: gameStateObj.to,
@@ -68,39 +87,51 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 						subordinate: null
 					});
 				},
-				join() {
-					this.move();
-				},
 				appear() {
-					animationsList.push({
+					animationsList.appears.push({
 						type: gameStateObj.type,
 						in: gameStateObj.in,
 						value: gameStateObj.value,
 						progress: 0,
-						isActive: false,
+						isActive: true,
 						subordinate: null
 					});
 				},
 				newGame() {
 					for (let position = 0; position < state.size; position++) {
-						animationsList = [];
+						animationsList = {
+							firstMoves: [],
+							joins: [],
+							lastMoves: [],
+							appears: []
+						};
+
 						state.grid[position] = new Array(state.size);
 						state.grid[position].fill(0);
 					}
+
+					nameAddAnimations = 'firstMoves';
+					nameRunningAnimations = 'firstMoves';
+					isAnimationsActive = true;
 				},
 				newAction() {
 					//apagar todas as animações vigentes e iniciar uma nova cadeia de animações
-					for(let animation of animationsList) {
-						if(animation.to) {
-							state.grid[animation.to.x][animation.to.y] = animation.value;
-							state.grid[animation.from.x][animation.from.y] = 0;
-						}
-						if(animation.in) {
-							state.grid[animation.in.x][animation.in.y] = animation.value;
+					animationsList = {
+						firstMoves: [],
+						joins: [],
+						lastMoves: [],
+						appears: []
+					};
+
+					for (let line in state.grid) {
+						for (let collum in state.grid[line]) {
+							state.grid[line][collum] = gameStateObj.grid[line][collum];
 						}
 					}
 
-					animationsList = [];
+					nameAddAnimations = 'firstMoves';
+					nameRunningAnimations = 'firstMoves';
+					isAnimationsActive = true;
 				}
 			}
 
@@ -135,7 +166,6 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 		const color = {
 			background: "#bbada0",
-			//emptyBlock: 'white',
 			block(value) {
 				if (value < 11) {
 					return colorPallet[value];
@@ -161,7 +191,23 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			}
 		}
 
-		runAnimations();
+		isAnimationsActive = true;
+
+		if (animationsList.firstMoves.length > 0) {
+			nameRunningAnimations = 'firstMoves';
+		} else if (animationsList.joins.length > 0) {
+			nameRunningAnimations = 'joins';
+		} else if (animationsList.lastMoves.length > 0) {
+			nameRunningAnimations = 'lastMoves';
+		} else if (animationsList.appears.length > 0) {
+			nameRunningAnimations = 'appears';
+		} else {
+			isAnimationsActive = false;
+		}
+
+		if (isAnimationsActive) {
+			runAnimations();
+		}
 
 		function runAnimations() {
 			const animationStep = 100 / 2;
@@ -249,7 +295,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				}
 			}
 
-			for (let animation of animationsList) {
+			for (let animation of animationsList[nameRunningAnimations]) {
 				if (animation.isActive == false) {
 					continue;
 				}
@@ -265,22 +311,17 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				animation.progress += animationStep;
 
 				if (animation.progress >= 100) {
-					//console.log(`animated ${animation.type}`);
 					finish[animation.type](animation);
 					animation.isActive = false;
 				}
 			}
 
-			if (animationsList[0] && animationsList[0].type == 'appear') {
-				animationsList[0].isActive = true;
-			}
-
-			while (animationsList[0] && animationsList[0].progress >= 100) {
-				if (animationsList[0].subordinate) {
-					animationsList[animationsList[0].subordinate].isActive = true;
+			while (animationsList[nameRunningAnimations][0] && animationsList[nameRunningAnimations][0].progress >= 100) {
+				if (animationsList[nameRunningAnimations][0].subordinate) {
+					animationsList[nameRunningAnimations][animationsList[nameRunningAnimations][0].subordinate].isActive = true;
 				}
 
-				animationsList.shift();
+				animationsList[nameRunningAnimations].shift();
 			}
 		}
 
@@ -304,7 +345,6 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			printParam.init.x += (block.size.width / 2) - (width / 2);
 			printParam.init.y += (block.size.height / 2) - (height / 2);
 
-			//screen.fillRect(printParam.init.x, printParam.init.y, width, height);
 			screen.fillRoundRect(printParam.init.x, printParam.init.y, width, height, 8);
 
 			if (value != 0) {
