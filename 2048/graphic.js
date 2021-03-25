@@ -2,6 +2,8 @@ import mapping from './mapping.js'
 
 //Exibição
 export default function newGraphicCanvas(windowInput, canvasId) {
+	let lastTime = new Date();
+
 	const canvas = windowInput.document.getElementById(canvasId);
 	const screen = canvas.getContext("2d");
 
@@ -209,8 +211,14 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			runAnimations();
 		}
 
+		lastTime = new Date();
+
 		function runAnimations() {
-			const animationStep = 100 / 5;
+			//const animationStep = 100 / 5;
+			const animationTimeMS = 50;
+			const currentTime = new Date();
+			const timeDifferenceMS = currentTime.getTime() - lastTime.getTime();
+			//lastTime = new Date();
 
 			const moves = {
 				move(animationObj) {
@@ -254,13 +262,11 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 					let size = block.size.width + 2 * block.space;
 
-					//penultimo passo
-					if (animationObj.progress + (3 * animationStep) >= 100) {
+					if (animationObj.progress >= 40 && animationObj.progress < 80) {
 						printBlock(animationObj.to.x, animationObj.to.y, animationObj.value, size, size);
 					}
 
-					//ultimo passo
-					if (animationObj.progress + animationStep >= 100) {
+					if (animationObj.progress >= 80) {
 
 						printBlock(animationObj.to.x, animationObj.to.y, animationObj.value + 1, size, size);
 					}
@@ -308,7 +314,8 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 					moves[animation.type](animation);
 				}
 
-				animation.progress += animationStep;
+				//animation.progress += animationStep;
+				animation.progress += (timeDifferenceMS/animationTimeMS)*100;
 
 				if (animation.progress >= 100) {
 					finish[animation.type](animation);
