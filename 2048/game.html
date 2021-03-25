@@ -21,6 +21,11 @@
 	<div class="game">
 		<canvas id="gameScreen" width="600" height="600"></canvas>
 	</div>
+	<div class="howToPlay">
+		<h1 id="howToPlay">How to play:</h1>
+		<p>Use arrow keys to move de pieces.</p>
+		<p>Use backspace to return to last state (just cam rowback onde moviment).</p>
+	</div>
 
 	<script type="module">
 		import startGame from './game.js';
@@ -68,9 +73,6 @@
 			const keyboardListner = newKeyboardListner();
 
 			function newTableSize(newSize) {
-				//const printSize = windowInput.document.getElementById("tableSizeOutput");
-				//printSize.innerText = `${newSize}x${newSize}`;
-
 				gameState.resize(newSize);
 			}
 

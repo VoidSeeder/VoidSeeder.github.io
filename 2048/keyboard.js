@@ -38,6 +38,7 @@ export default function newKeyboardListner() {
 		}
 
 		if (acceptedKeys[key]) {
+			event.preventDefault();
 			acceptedKeys[key]();
 		}
 	}
