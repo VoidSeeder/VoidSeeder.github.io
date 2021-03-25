@@ -66,7 +66,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				move() {
 					if (nameAddAnimations == 'joins') {
 						nameAddAnimations = 'lastMoves';
-					} else if(nameAddAnimations == 'appears') {
+					} else if (nameAddAnimations == 'appears') {
 						nameAddAnimations = 'firstMoves';
 					}
 
@@ -210,7 +210,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		}
 
 		function runAnimations() {
-			const animationStep = 100 / 2;
+			const animationStep = 100 / 5;
 
 			const moves = {
 				move(animationObj) {
