@@ -51,13 +51,15 @@ export default function startGame(initialSize) {
 			type: 'appear', in: { x: position.x, y: position.y }, value: game.grid[position.x][position.y]
 		});
 
+		previousState.grid[position.x][position.y] = game.grid[position.x][position.y];
+
 		position = newBlock(game);
 		notifyAll({
 			size: game.size, grid: game.grid, score: game.score,
 			type: 'appear', in: { x: position.x, y: position.y }, value: game.grid[position.x][position.y]
 		});
 
-		//notifyAll({ size: game.size, grid: game.grid, score: game.score });
+		previousState.grid[position.x][position.y] = game.grid[position.x][position.y];
 	}
 
 	function move(input) {

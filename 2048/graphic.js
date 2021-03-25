@@ -214,11 +214,9 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		lastTime = new Date();
 
 		function runAnimations() {
-			//const animationStep = 100 / 5;
 			const animationTimeMS = 50;
 			const currentTime = new Date();
 			const timeDifferenceMS = currentTime.getTime() - lastTime.getTime();
-			//lastTime = new Date();
 
 			const moves = {
 				move(animationObj) {
@@ -314,7 +312,6 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 					moves[animation.type](animation);
 				}
 
-				//animation.progress += animationStep;
 				animation.progress += (timeDifferenceMS/animationTimeMS)*100;
 
 				if (animation.progress >= 100) {
