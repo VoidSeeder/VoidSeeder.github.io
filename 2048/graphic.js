@@ -180,16 +180,16 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		screen.textBaseline = 'middle';
 		screen.textAlign = 'center';
 
-		//0 2 4 8 16 32 64 128 512 1024 2048 4096
+		//0 2 4 8 16 32 64 128 256 512 1024 2048 4096
 		const colorPallet = ["#cdc0b4", "#eee4da", "#ede0c8", "#f2b179", "#f59563", "#f67c5f", "#f65e3b", "#edcf72", "#edcc61", "#edc850", "#edc53f", "#edc22e", "#3c3a32"];
-
+	
 		const color = {
 			background: "#bbada0",
 			block(value) {
-				if (value < 11) {
+				if (value < 12) {
 					return colorPallet[value];
 				} else {
-					return colorPallet[11];
+					return colorPallet[12];
 				}
 			},
 			text(value) {
@@ -226,33 +226,50 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		} else {
 			isAnimationsActive = false;
 
+			let warning = {
+				color: {
+					background: '#4CAF50',
+					text: 'white',
+				},
+				size: {
+					width: 400,
+					height: 170,
+					text: '60px',
+					instructions: '24px'
+				}
+			};
+
 			if (!isKeepGoing && isGameWon) {
 				//printa game won
 				screen.fillStyle = `rgba(255, 255, 255, ${0.5})`;
 				screen.fillRect(0, 0, canvas.width, canvas.height);
-			} else if (!isKeepGoing && isGameOver) {
+
+				screen.fillStyle = warning.color.background;
+				screen.translate(canvas.width / 2, canvas.height / 2);
+				screen.fillRoundRect(-warning.size.width / 2, -warning.size.height / 2, warning.size.width, warning.size.height, (8 / 125) * warning.size.height);
+				screen.fillStyle = warning.color.text;
+				screen.font = `bold ${warning.size.text} Arial`;
+				screen.fillText("Game won!", 0, -40);
+				//TO DO: 'Enter to new game or arrows to keep going'
+				screen.font = `normal ${warning.size.instructions} Arial`;
+				screen.fillText("Use ENTER to start a new game.", 0, 10);
+				screen.fillText("Use ARROWS to keep going.", 0, 50);
+				screen.translate(-canvas.width / 2, -canvas.height / 2);
+			} else if (isGameOver) {
 				//printa game over
 				screen.fillStyle = `rgba(${0xFF}, ${0xFF}, ${0xFF}, ${0.5})`;
 				screen.fillRect(0, 0, canvas.width, canvas.height);
 
-				let warning = {
-					color: {
-						background: '#4CAF50',
-						text: 'white'
-					},
-					size: {
-						width: 400,
-						height: 150,
-						text: '60px'
-					}
-				}
-				
 				screen.fillStyle = warning.color.background;
 				screen.translate(canvas.width / 2, canvas.height / 2);
-				screen.fillRoundRect(-warning.size.width / 2, -warning.size.height / 2, warning.size.width, warning.size.height, (8/125)*warning.size.height);
+				screen.fillRoundRect(-warning.size.width / 2, -warning.size.height / 2, warning.size.width, warning.size.height, (8 / 125) * warning.size.height);
 				screen.fillStyle = warning.color.text;
 				screen.font = `bold ${warning.size.text} Arial`;
-				screen.fillText("Game Over", 0, 0);
+				screen.fillText("Game Over", 0, -40);
+				//TO DO: 'Backspace to rollback or Enter to new game'
+				screen.font = `normal ${warning.size.instructions} Arial`;
+				screen.fillText("Use ENTER to start a new game.", 0, 10);
+				screen.fillText("Use BACKSPACE to rollback.", 0, 50);
 				screen.translate(-canvas.width / 2, -canvas.height / 2);
 			}
 		}
@@ -367,7 +384,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				if (animation.progress >= 100) {
 					finish[animation.type](animation);
 					animation.isActive = false;
-					if(animation.subordinate) {
+					if (animation.subordinate) {
 						let indexAux = animationsList[nameRunningAnimations].indexOf(animation);
 						animationsList[nameRunningAnimations][indexAux + animation.subordinate].isActive = true;
 					}

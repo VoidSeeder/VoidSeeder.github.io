@@ -6,12 +6,14 @@ export default function startGame(initialSize) {
 		size: initialSize,
 		grid: new Array(initialSize),
 		score: 0,
+		isKeepGoing: false,
 		observers: []
 	}
 
 	let previousState = {
 		grid: new Array(initialSize),
-		score: 0
+		score: 0,
+		isKeepGoing: false
 	};
 
 	function subscribe(observerFunction) {
@@ -29,8 +31,10 @@ export default function startGame(initialSize) {
 		game.size = newSize;
 		game.score = 0;
 		game.grid = new Array(game.size);
+		game.isKeepGoing = false;
 		previousState.grid = new Array(game.size);
 		previousState.score = 0;
+		previousState.isKeepGoing = false;
 
 		for (let position = 0; position < game.size; position++) {
 			game.grid[position] = new Array(game.size);
@@ -78,6 +82,14 @@ export default function startGame(initialSize) {
 			});
 
 			game.score = previousState.score;
+			game.isKeepGoing = previousState.isKeepGoing;
+
+			if (game.isKeepGoing) {
+				notifyAll({
+					size: game.size, grid: game.grid, score: game.score,
+					type: 'keepGoing'
+				});
+			}
 
 			for (let line in game.grid) {
 				for (let column in game.grid[line]) {
@@ -91,6 +103,23 @@ export default function startGame(initialSize) {
 			}
 		}
 
+		if (verifyGameWon(game) && input != 'enter' && !game.isKeepGoing) {
+			notifyAll({
+				size: game.size, grid: game.grid, score: game.score,
+				type: 'keepGoing'
+			});
+
+			game.isKeepGoing = true;
+		}
+
+		if (verifyGameWon(game) && input == 'enter' && !game.isKeepGoing) {
+			resize(game.size);
+		}
+
+		if (verifyGameOver(game) && input == 'enter') {
+			resize(game.size);
+		}
+
 		function saveState() {
 			for (let line in game.grid) {
 				for (let column in game.grid[line]) {
@@ -99,6 +128,7 @@ export default function startGame(initialSize) {
 			}
 
 			previousState.score = game.score;
+			previousState.isKeepGoing = game.isKeepGoing;
 		}
 
 		stackUp(input);
@@ -154,19 +184,19 @@ export default function startGame(initialSize) {
 				type: 'appear', in: { x: Number(position.x), y: Number(position.y) }, value: game.grid[position.x][position.y]
 			});
 
-			if(verifyGameOver(game)) {
+			if (verifyGameOver(game)) {
 				notifyAll({
 					size: game.size, grid: game.grid, score: game.score,
 					type: 'gameOver'
 				});
 			}
-	
-			if(verifyGameWon(game)) {
+
+			if (verifyGameWon(game)) {
 				notifyAll({
 					size: game.size, grid: game.grid, score: game.score,
 					type: 'gameWon'
 				});
-			}	
+			}
 		}
 
 		function stackUp(direction) {
@@ -388,35 +418,33 @@ export default function startGame(initialSize) {
 }
 
 function verifyGameOver(gameObj) {
-	for(let line in gameObj.grid) {
-		for(let collumn in gameObj.grid[line]) {
-			if(gameObj.grid[line][collumn] == 0) {
+	for (let line in gameObj.grid) {
+		for (let collumn in gameObj.grid[line]) {
+			if (gameObj.grid[line][collumn] == 0) {
 				return false;
 			}
 
-			if(Number(line) + 1 < gameObj.size) {
-				if(gameObj.grid[line][collumn] == gameObj.grid[Number(line) + 1][collumn]) {
+			if (Number(line) + 1 < gameObj.size) {
+				if (gameObj.grid[line][collumn] == gameObj.grid[Number(line) + 1][collumn]) {
 					return false;
 				}
 			}
 
-			if(Number(collumn) + 1 < gameObj.size) {
-				if(gameObj.grid[line][collumn] == gameObj.grid[line][Number(collumn) + 1]) {
+			if (Number(collumn) + 1 < gameObj.size) {
+				if (gameObj.grid[line][collumn] == gameObj.grid[line][Number(collumn) + 1]) {
 					return false;
 				}
 			}
 		}
 	}
 
-	console.log("game over");
 	return true;
 }
 
 function verifyGameWon(gameObj) {
-	for(let line in gameObj.grid) {
-		for(let collumn in gameObj.grid[line]) {
-			if(2**gameObj.grid[line][collumn] == 2048) {
-				console.log("game won");
+	for (let line in gameObj.grid) {
+		for (let collumn in gameObj.grid[line]) {
+			if (2 ** gameObj.grid[line][collumn] == 2048) {
 				return true;
 			}
 		}

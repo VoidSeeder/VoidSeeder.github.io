@@ -34,6 +34,9 @@ export default function newKeyboardListner() {
 			},
 			Backspace() {
 				notifyAll('backspace');
+			},
+			Enter() {
+				notifyAll('enter');
 			}
 		}
 
