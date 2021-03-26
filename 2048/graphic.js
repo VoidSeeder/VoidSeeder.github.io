@@ -21,6 +21,9 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 	let nameAddAnimations = 'firstMoves';
 	let nameRunningAnimations = 'firstMoves';
+	let isGameOver = false;
+	let isGameWon = false;
+	let isKeepGoing = false;
 	let isAnimationsActive = false;
 
 	function stateUpdate(gameStateObj) {
@@ -100,6 +103,10 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 					});
 				},
 				newGame() {
+					isGameOver = false;
+					isGameWon = false;
+					isKeepGoing = false;
+
 					for (let position = 0; position < state.size; position++) {
 						animationsList = {
 							firstMoves: [],
@@ -127,13 +134,26 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 					for (let line in state.grid) {
 						for (let collum in state.grid[line]) {
-							state.grid[line][collum] = gameStateObj.grid[line][collum];
+							if (gameStateObj.grid) {
+								state.grid[line][collum] = gameStateObj.grid[line][collum];
+							} else {
+								state.grid[line][collum] = 0;
+							}
 						}
 					}
 
 					nameAddAnimations = 'firstMoves';
 					nameRunningAnimations = 'firstMoves';
 					isAnimationsActive = true;
+				},
+				gameOver() {
+					isGameOver = true;
+				},
+				gameWon() {
+					isGameWon = true;
+				},
+				keepGoing() {
+					isKeepGoing = true;
 				}
 			}
 
@@ -145,9 +165,6 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 	//desenha o novo frame
 	function newFrame() {
-		//limpa a tela
-		screen.clearRect(0, 0, canvas.width, canvas.height);
-
 		const block = {
 			size: null,
 			space: null
@@ -156,8 +173,8 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		block.space = 80 / state.size;
 
 		block.size = {
-			width: (canvas.width - (state.size * block.space) - block.space) / state.size,
-			height: (canvas.height - (state.size * block.space) - block.space) / state.size
+			width: (canvas.width - ((state.size + 1) * block.space)) / state.size,
+			height: (canvas.height - ((state.size + 1) * block.space)) / state.size
 		}
 
 		screen.textBaseline = 'middle';
@@ -184,6 +201,9 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			}
 		}
 
+		//limpa a tela
+		screen.clearRect(0, 0, canvas.width, canvas.height);
+
 		screen.fillStyle = color.background;
 		screen.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -205,6 +225,36 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			nameRunningAnimations = 'appears';
 		} else {
 			isAnimationsActive = false;
+
+			if (!isKeepGoing && isGameWon) {
+				//printa game won
+				screen.fillStyle = `rgba(255, 255, 255, ${0.5})`;
+				screen.fillRect(0, 0, canvas.width, canvas.height);
+			} else if (!isKeepGoing && isGameOver) {
+				//printa game over
+				screen.fillStyle = `rgba(${0xFF}, ${0xFF}, ${0xFF}, ${0.5})`;
+				screen.fillRect(0, 0, canvas.width, canvas.height);
+
+				let warning = {
+					color: {
+						background: '#4CAF50',
+						text: 'white'
+					},
+					size: {
+						width: 400,
+						height: 150,
+						text: '60px'
+					}
+				}
+				
+				screen.fillStyle = warning.color.background;
+				screen.translate(canvas.width / 2, canvas.height / 2);
+				screen.fillRoundRect(-warning.size.width / 2, -warning.size.height / 2, warning.size.width, warning.size.height, (8/125)*warning.size.height);
+				screen.fillStyle = warning.color.text;
+				screen.font = `bold ${warning.size.text} Arial`;
+				screen.fillText("Game Over", 0, 0);
+				screen.translate(-canvas.width / 2, -canvas.height / 2);
+			}
 		}
 
 		if (isAnimationsActive) {
@@ -312,7 +362,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 					moves[animation.type](animation);
 				}
 
-				animation.progress += (timeDifferenceMS/animationTimeMS)*100;
+				animation.progress += (timeDifferenceMS / animationTimeMS) * 100;
 
 				if (animation.progress >= 100) {
 					finish[animation.type](animation);
@@ -349,7 +399,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			printParam.init.x += (block.size.width / 2) - (width / 2);
 			printParam.init.y += (block.size.height / 2) - (height / 2);
 
-			screen.fillRoundRect(printParam.init.x, printParam.init.y, width, height, 8);
+			screen.fillRoundRect(printParam.init.x, printParam.init.y, width, height, (8 / 125) * width);
 
 			if (value != 0) {
 				screen.fillStyle = color.text(value);

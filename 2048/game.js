@@ -73,7 +73,7 @@ export default function startGame(initialSize) {
 			});
 
 			notifyAll({
-				size: game.size, grid: game.grid, score: game.score,
+				size: game.size, /*grid: game.grid,*/ score: game.score,
 				type: 'newAction'
 			});
 
@@ -153,6 +153,20 @@ export default function startGame(initialSize) {
 				size: game.size, grid: game.grid, score: game.score,
 				type: 'appear', in: { x: Number(position.x), y: Number(position.y) }, value: game.grid[position.x][position.y]
 			});
+
+			if(verifyGameOver(game)) {
+				notifyAll({
+					size: game.size, grid: game.grid, score: game.score,
+					type: 'gameOver'
+				});
+			}
+	
+			if(verifyGameWon(game)) {
+				notifyAll({
+					size: game.size, grid: game.grid, score: game.score,
+					type: 'gameWon'
+				});
+			}	
 		}
 
 		function stackUp(direction) {
@@ -371,6 +385,44 @@ export default function startGame(initialSize) {
 		resize,
 		move
 	};
+}
+
+function verifyGameOver(gameObj) {
+	for(let line in gameObj.grid) {
+		for(let collumn in gameObj.grid[line]) {
+			if(gameObj.grid[line][collumn] == 0) {
+				return false;
+			}
+
+			if(Number(line) + 1 < gameObj.size) {
+				if(gameObj.grid[line][collumn] == gameObj.grid[Number(line) + 1][collumn]) {
+					return false;
+				}
+			}
+
+			if(Number(collumn) + 1 < gameObj.size) {
+				if(gameObj.grid[line][collumn] == gameObj.grid[line][Number(collumn) + 1]) {
+					return false;
+				}
+			}
+		}
+	}
+
+	console.log("game over");
+	return true;
+}
+
+function verifyGameWon(gameObj) {
+	for(let line in gameObj.grid) {
+		for(let collumn in gameObj.grid[line]) {
+			if(2**gameObj.grid[line][collumn] == 2048) {
+				console.log("game won");
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 function newBlock(gameObj) {
