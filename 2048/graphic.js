@@ -367,14 +367,14 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 				if (animation.progress >= 100) {
 					finish[animation.type](animation);
 					animation.isActive = false;
+					if(animation.subordinate) {
+						let indexAux = animationsList[nameRunningAnimations].indexOf(animation);
+						animationsList[nameRunningAnimations][indexAux + animation.subordinate].isActive = true;
+					}
 				}
 			}
 
 			while (animationsList[nameRunningAnimations][0] && animationsList[nameRunningAnimations][0].progress >= 100) {
-				if (animationsList[nameRunningAnimations][0].subordinate) {
-					animationsList[nameRunningAnimations][animationsList[nameRunningAnimations][0].subordinate].isActive = true;
-				}
-
 				animationsList[nameRunningAnimations].shift();
 			}
 		}
