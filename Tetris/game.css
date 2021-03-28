@@ -1,0 +1,9 @@
+div {
+	text-align: center;
+}
+
+canvas {
+	border-style: solid;
+	border-color: #4CAF50;
+	max-width: 100%;
+}

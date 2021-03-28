@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>myTetris</title>
+	<link rel="stylesheet" href="game.css">
+</head>
+
+<body>
+	<div class="game">
+		<canvas id="gameScreen" height="700" width="700"></canvas>
+	</div>
+
+	<script type="module">
+		import newGraphicCanvas from './graphic.js';
+		import newGame from './game.js';
+
+		window.onload = () => {
+			newGraphicCanvas(window, "gameScreen");
+
+			newGame();
+		}
+	</script>
+</body>
+
+</html>
