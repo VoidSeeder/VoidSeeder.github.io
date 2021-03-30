@@ -20,39 +20,35 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		}
 	}
 
+	const pieceColors = {
+		'empty': 'darkgrey',
+		'O': 'gold',
+		'I': 'darkcyan',
+		'S': 'red',
+		'Z': 'green',
+		'L': 'orange',
+		'J': 'deeppink',
+		'T': 'darkmagenta'
+	}
+
 	function stateUpdate(command) {
+		let color;
+
 		screen.clearRect(boardBackground.position.x, boardBackground.position.y, boardBackground.width, boardBackground.height);
 		for (let line in command.state) {
 			for (let collumn in command.state[line]) {
-				if (command.state[line][collumn] != 'empty') {
-					// drawSquareFromPosition(line, collumn, 'red');
-					drawSquareFromPosition(collumn, line, 'red');
+				if(!command.state[line].includes('empty')) {
+					color = 'white';
 				} else {
-					// drawSquareFromPosition(line, collumn, 'darkgrey');
-					drawSquareFromPosition(collumn, line, 'darkgrey');
+					color = pieceColors[command.state[line][collumn]];
 				}
+				
+				drawSquareFromPosition(collumn, line, color, 'black');
 			}
 		}
 	}
 
-	drawBackground();
-
-	function drawBackground() {
-		for (let line = 0; line < boardBackground.size.x; line++) {
-			for (let collumn = 0; collumn < boardBackground.size.y; collumn++) {
-				let squareSize = boardBackground.width / (boardBackground.size.x + (boardBackground.size.x + 1) * (boardBackground.size.spacing));
-				let spacing = boardBackground.size.spacing * squareSize;
-				let squarePosition = {
-					x: Number(line) * (squareSize + spacing) + (boardBackground.position.x + spacing),
-					y: Number(collumn) * (squareSize + spacing) + (boardBackground.position.y + spacing)
-				}
-
-				drawSingleSquare(squarePosition, squareSize, boardBackground.color.background);
-			}
-		}
-	}
-
-	function drawSquareFromPosition(positionX, positionY, color) {
+	function drawSquareFromPosition(positionX, positionY, color, borderColor = null) {
 		let squareSize = boardBackground.width / (boardBackground.size.x + (boardBackground.size.x + 1) * (boardBackground.size.spacing));
 		let spacing = boardBackground.size.spacing * squareSize;
 		let squarePosition = {
@@ -60,7 +56,7 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			y: Number(positionY) * (squareSize + spacing) + (boardBackground.position.y + spacing)
 		}
 
-		drawSingleSquare(squarePosition, squareSize, color);
+		drawSingleSquare(squarePosition, squareSize, color, borderColor);
 	}
 
 	function drawSingleSquare(position, size, color, borderColor = null) {

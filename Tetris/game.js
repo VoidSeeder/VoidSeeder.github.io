@@ -62,6 +62,50 @@ export default function newGame() {
 		return newMatrix;
 	}
 
+	function genericVerifyNextStep(gameObj, shape, position) {
+		for (let line in shape) {
+			for (let collumn in shape[line]) {
+				if (position.line + Number(line) < 0 || position.line + Number(line) > boardSize.linesAmount - 1) {
+					return false;
+				}
+
+				if (position.collumn + Number(collumn) < 0 || position.collumn + Number(collumn) > boardSize.collumnsAmount - 1) {
+					return false;
+				}
+
+				let positionToAnalaise = gameObj[position.line + Number(line)][position.collumn + Number(collumn)];
+
+				if (shape[line][collumn] == 1 && positionToAnalaise != 'empty') {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	function removeLine(gameObj, lineNumber) {
+		for (let line = lineNumber; line > 0; line--) {
+			gameObj[line] = [].concat(gameObj[Number(line) - 1]);
+		}
+
+		gameObj[0].fill('empty');
+	}
+
+	function getTurnScore(gameObj) {
+		let scoreTypes = [0, 40, 100, 300, 1200];
+		let linesRemoved = 0;
+
+		for (let line in gameObj) {
+			if (!gameObj[line].includes('empty')) {
+				linesRemoved += 1;
+				removeLine(gameObj, line);
+			}
+		}
+
+		return scoreTypes[linesRemoved];
+	}
+
 	function Piece(name, shape) {
 		this.name = name;
 		this.shape = shape;
@@ -110,53 +154,22 @@ export default function newGame() {
 		this.canMove = function (gameObj, direction) {
 			const movesToTry = {
 				right(pieceObj) {
-					let shapeWidth = pieceObj.shape[0].length;
-
-					for (let line in pieceObj.shape) {
-						if(pieceObj.position.collumn + Number(shapeWidth) > boardSize.collumnsAmount - 1) {
-							return false;
-						}
-
-						let positionToAnalaise = gameObj[pieceObj.position.line + Number(line)][pieceObj.position.collumn + shapeWidth];
-
-						if (pieceObj.shape[line][shapeWidth - 1] == 1 && positionToAnalaise != 'empty') {
-							return false;
-						}
-					}
-
-					return true;
+					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+						line: pieceObj.position.line,
+						collumn: pieceObj.position.collumn + 1
+					});
 				},
 				left(pieceObj) {
-					for (let line in pieceObj.shape) {
-						if(pieceObj.position.collumn - 1 < 0) {
-							return false;
-						}
-
-						let positionToAnalaise = gameObj[pieceObj.position.line + Number(line)][pieceObj.position.collumn - 1];
-
-						if (pieceObj.shape[line][0] == 1 && positionToAnalaise != 'empty') {
-							return false;
-						}
-					}
-
-					return true;
+					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+						line: pieceObj.position.line,
+						collumn: pieceObj.position.collumn - 1
+					});
 				},
 				down(pieceObj) {
-					let shapeHeight = pieceObj.shape.length;
-
-					for (let collumn in pieceObj.shape[0]) {
-						if(pieceObj.position.line + shapeHeight > boardSize.linesAmount - 1) {
-							return false;
-						}
-
-						let positionToAnalaise = gameObj[pieceObj.position.line + shapeHeight][pieceObj.position.collumn + Number(collumn)];
-
-						if (pieceObj.shape[shapeHeight - 1][collumn] == 1 && positionToAnalaise != 'empty') {
-							return false;
-						}
-					}
-
-					return true;
+					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+						line: pieceObj.position.line + 1,
+						collumn: pieceObj.position.collumn
+					});
 				}
 			}
 
@@ -167,19 +180,7 @@ export default function newGame() {
 			return false;
 		}
 		this.canRotate = function (gameObj) {
-			let shapeCopy = genericRotate(this.shape);
-
-			for (let line in shapeCopy) {
-				for (let collumn in shapeCopy[line]) {
-					let positionToAnalaise = gameObj[this.position.line + Number(line)][this.position.collumn + Number(collumn)];
-
-					if(shapeCopy[line][collumn] == 1 && positionToAnalaise != 'empty') {
-						return false;
-					}
-				}
-			}
-
-			return true;
+			return genericVerifyNextStep(gameObj, genericRotate(this.shape), this.position);
 		}
 	}
 
@@ -251,42 +252,45 @@ export default function newGame() {
 	}
 
 	setInterval(() => {
+		let score = 0;
 		activatedPiece.remove(state);
 
-		if (activatedPiece.canMove(state, 'down')) {
+		if(activatedPiece.canMove(state, 'down')) {
 			activatedPiece.move('down');
 		} else {
 			activatedPiece.place(state);
+			score = getTurnScore(state);
 			activatedPiece = generateNewPiece();
+			console.log("score " + score);
 		}
 
 		activatedPiece.place(state);
 
-		notifyAll({ state });
-
+		notifyAll({ state, score });
 	}, 500);
 
 	function getInput(command) {
-		console.log(command);
-		if(activatedPiece.canMove(state, command)) {
-			activatedPiece.remove(state);
+		activatedPiece.remove(state);
+
+		if (activatedPiece.canMove(state, command)) {
 			activatedPiece.move(command);
 			activatedPiece.place(state);
 
-			notifyAll({ state });
+			return notifyAll({ state });
 		}
 
-		if(command == 'rotate') {
-			activatedPiece.remove(state);
-
-			if(activatedPiece.canRotate(state)) {
+		if (command == 'rotate') {
+			//TO DO: corrigir problema que as vezes impede uma peça de rodar quando esta no canto direito
+			if (activatedPiece.canRotate(state)) {
 				activatedPiece.rotate();
 			}
 
 			activatedPiece.place(state);
 
-			notifyAll({ state });
+			return notifyAll({ state });
 		}
+
+		return activatedPiece.place(state);
 	}
 
 	return {
