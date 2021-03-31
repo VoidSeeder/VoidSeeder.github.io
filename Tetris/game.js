@@ -180,7 +180,16 @@ export default function newGame() {
 			return false;
 		}
 		this.canRotate = function (gameObj) {
-			return genericVerifyNextStep(gameObj, genericRotate(this.shape), this.position);
+			for (let width in this.shape) {
+				if (this.position.collumn - Number(width) < 0) {
+					return { answer: false };
+				}
+				if (genericVerifyNextStep(gameObj, genericRotate(this.shape), { line: this.position.line, collumn: this.position.collumn - Number(width) })) {
+					return { answer: true, move: Number(width) };
+				}
+			}
+
+			return { answer: false };
 		}
 	}
 
@@ -255,7 +264,7 @@ export default function newGame() {
 		let score = 0;
 		activatedPiece.remove(state);
 
-		if(activatedPiece.canMove(state, 'down')) {
+		if (activatedPiece.canMove(state, 'down')) {
 			activatedPiece.move('down');
 		} else {
 			activatedPiece.place(state);
@@ -280,8 +289,10 @@ export default function newGame() {
 		}
 
 		if (command == 'rotate') {
-			//TO DO: corrigir problema que as vezes impede uma peça de rodar quando esta no canto direito
-			if (activatedPiece.canRotate(state)) {
+			if (activatedPiece.canRotate(state).answer) {
+				for(let counter = activatedPiece.canRotate(state).move; counter > 0; counter--) {
+					activatedPiece.move('left');
+				}
 				activatedPiece.rotate();
 			}
 
