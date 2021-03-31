@@ -18,13 +18,16 @@
 		import newGraphicCanvas from './graphic.js';
 		import newGame from './game.js';
 		import newKeyboardListner from './keyboard.js';
+		import newSound from './sounds.js';
 
 		window.onload = () => {
 			const graphicInstance = newGraphicCanvas(window, "gameScreen");
 			const gameInstance = newGame();
 			const keyboardInstance = newKeyboardListner(window);
+			const soundInstance = newSound();
 
 			gameInstance.subscribe(graphicInstance.stateUpdate);
+			gameInstance.subscribe(soundInstance.soundObserver);
 			keyboardInstance.subscribe(gameInstance.getInput);
 		}
 	</script>
