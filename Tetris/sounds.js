@@ -1,4 +1,5 @@
 export default function newSound() {
+	let lastScore = 0;
 	const soundEffects = {	
 		fullLine: new Audio('./soundEffects/mixkit-explainer-video-game-alert-sweep-236.wav'),
 		scoreUpdate: new Audio('./soundEffects/mixkit-retro-arcade-casino-notification-211.wav')
@@ -20,9 +21,10 @@ export default function newSound() {
 			}
 		}
 
-		if(command.score > 0) {
+		if(command.score && command.score != lastScore) {
 			soundEffects.fullLine.stop();
 			soundEffects.scoreUpdate.play();
+			lastScore = command.score;
 		}
 	}
 

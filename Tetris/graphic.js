@@ -31,7 +31,51 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		'T': 'darkmagenta'
 	}
 
+	drawScoreDiv();
+	
+	function drawScoreDiv() {
+		screen.fillStyle = 'blue';
+		screen.fillRoundRect((3*canvas.width/4) + 30, 30, 130, 80, 10);
+		screen.fillStyle = 'white';
+		screen.fillRoundRect((3*canvas.width/4) + 35, 75, 120, 30, 10);
+		
+		screen.textBaseline = 'middle';
+		screen.textAlign = 'center';
+		screen.translate((3*canvas.width/4) + 30, 30);
+		screen.font = `bolder 36px Courier New`
+		screen.fillText('SCORE', 130/2, 50/2);
+
+		screen.fillStyle = 'blue'
+		screen.textAlign = 'right';
+		screen.font = `bold 20px Arial`
+		screen.fillText('0', 130 - 10, 50 + 25/2);
+
+		screen.resetTransform();
+	}
+
 	function stateUpdate(command) {
+		updateBoard(command);
+		if(command.score) {
+			updateScore(command);
+		}
+		
+	}
+
+	function updateScore(command) {
+		screen.fillStyle = 'white';
+		screen.fillRoundRect((3*canvas.width/4) + 35, 75, 120, 30, 10);
+		
+		screen.textBaseline = 'middle';
+		screen.fillStyle = 'blue'
+		screen.textAlign = 'right';
+		screen.font = `bold 20px Arial`
+		screen.translate((3*canvas.width/4) + 30, 30);
+		screen.fillText(`${command.score}`, 130 - 10, 50 + 25/2);
+
+		screen.resetTransform();
+	}
+
+	function updateBoard(command) {
 		let color;
 
 		screen.clearRect(boardBackground.position.x, boardBackground.position.y, boardBackground.width, boardBackground.height);
@@ -72,4 +116,18 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 	return {
 		stateUpdate
 	}
+}
+
+CanvasRenderingContext2D.prototype.fillRoundRect = function (x, y, width, height, radius) {
+	if (width < 2 * radius) radius = width / 2;
+	if (height < 2 * radius) radius = height / 2;
+	this.beginPath();
+	this.moveTo(x + radius, y);
+	this.arcTo(x + width, y, x + width, y + height, radius);
+	this.arcTo(x + width, y + height, x, y + height, radius);
+	this.arcTo(x, y + height, x, y, radius);
+	this.arcTo(x, y, x + width, y, radius);
+	this.closePath();
+	this.fill();
+	return this;
 }

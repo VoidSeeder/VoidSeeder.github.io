@@ -19,6 +19,7 @@ export default function newGame() {
 	}
 
 	const state = new Array(boardSize.linesAmount);
+	let score = 0;
 
 	for (let line = 0; line < boardSize.linesAmount; line++) {
 		state[line] = new Array(boardSize.collumnsAmount);
@@ -261,14 +262,13 @@ export default function newGame() {
 	}
 
 	setInterval(() => {
-		let score = 0;
 		activatedPiece.remove(state);
 
 		if (activatedPiece.canMove(state, 'down')) {
 			activatedPiece.move('down');
 		} else {
 			activatedPiece.place(state);
-			score = getTurnScore(state);
+			score += getTurnScore(state);
 			activatedPiece = generateNewPiece();
 			console.log("score " + score);
 		}
