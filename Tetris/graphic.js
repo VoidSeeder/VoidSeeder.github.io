@@ -4,30 +4,46 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 	const canvas = windowInput.document.getElementById(canvasId);
 	const screen = canvas.getContext('2d');
 
-	const boardBackground = {
-		width: canvas.width / 2,
-		height: canvas.height,
-		position: {
-			x: canvas.width / 4,
-			y: 0
-		},
-		size: {
-			x: 10,
-			y: 20,
-			spacing: 1 / 20
-		},
-		color: {
-			background: 'darkgrey',
-			border: 'black'
+	function drawBoardDiv() {
+		const board = {
+			width: canvas.width / 2,
+			height: canvas.height,
+			position: {
+				x: canvas.width / 4,
+				y: 0
+			},
+			size: {
+				x: 10,
+				y: 20,
+				spacing: 1 / 20
+			},
+			borderColor: 'black'
 		}
+
+		board.squareSize = board.width / (board.size.x + (board.size.x + 1) * (board.size.spacing));
+		board.spacing = board.size.spacing * board.squareSize;
+
+		board.pieces = getPiecesWithEmpty(true);
+
+		board.update = function (command) {
+			let color;
+
+			screen.clearRect(board.position.x, board.position.y, board.width, board.height);
+			for (let line in command.state) {
+				for (let collumn in command.state[line]) {
+					if (!command.state[line].includes('empty')) {
+						color = 'white';
+					} else {
+						color = board.pieces.find(element => element.name == command.state[line][collumn]).color;
+					}
+
+					drawSquareFromPosition(collumn, line, color, board.borderColor);
+				}
+			}
+		}
+
+		return board
 	}
-
-	boardBackground.squareSize = boardBackground.width / (boardBackground.size.x + (boardBackground.size.x + 1) * (boardBackground.size.spacing));
-	boardBackground.spacing = boardBackground.size.spacing * boardBackground.squareSize;
-
-	const pieces = getPiecesWithEmpty(true);
-
-	drawScoreDiv();
 
 	function drawScoreDiv() {
 		screen.fillStyle = 'blue';
@@ -47,15 +63,32 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		screen.fillText('0', 130 - 10, 50 + 25 / 2);
 
 		screen.resetTransform();
+
+		function update(command) {
+			screen.fillStyle = 'white';
+			screen.fillRoundRect((3 * canvas.width / 4) + 35, 75, 120, 30, 10);
+
+			screen.textBaseline = 'middle';
+			screen.fillStyle = 'blue'
+			screen.textAlign = 'right';
+			screen.font = `bold 20px Arial`
+			screen.translate((3 * canvas.width / 4) + 30, 30);
+			screen.fillText(`${command.score}`, 130 - 10, 50 + 25 / 2);
+
+			screen.resetTransform();
+		}
+
+		return {
+			update
+		}
 	}
 
-	drawNextPieceDiv();
-
 	function drawNextPieceDiv() {
-		let size = {
-			w: (4 * boardBackground.squareSize) + ((2 + 4) * boardBackground.spacing),
-			h: (3 * boardBackground.squareSize) + ((2 + 3) * boardBackground.spacing)
+		const size = {
+			w: (4 * board.squareSize) + ((2 + 4) * board.spacing),
+			h: (3 * board.squareSize) + ((2 + 3) * board.spacing)
 		}
+
 		screen.fillStyle = 'blue';
 		screen.fillRoundRect(10, 10, size.w + 10, size.h + 10 + 40, 10);
 
@@ -67,78 +100,39 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		screen.fillText('NEXT PIECE', (size.w + 10) / 2, 50 / 2);
 
 		screen.resetTransform();
-	}
 
-	function stateUpdate(command) {
-		updateBoard(command);
-		updateScore(command);
-		updateNextPiece(command);
-	}
+		function update(command) {
+			const nextPieceObj = board.pieces.find(element => element.name == command.nextPiece.name);
 
-	function updateScore(command) {
-		screen.fillStyle = 'white';
-		screen.fillRoundRect((3 * canvas.width / 4) + 35, 75, 120, 30, 10);
+			screen.fillStyle = 'white';
+			screen.fillRoundRect(15, 55, size.w, size.h, 10);
 
-		screen.textBaseline = 'middle';
-		screen.fillStyle = 'blue'
-		screen.textAlign = 'right';
-		screen.font = `bold 20px Arial`
-		screen.translate((3 * canvas.width / 4) + 30, 30);
-		screen.fillText(`${command.score}`, 130 - 10, 50 + 25 / 2);
+			screen.translate(15 + (size.w / 2), 55 + (size.h / 2));
+			screen.translate(-(board.squareSize + board.spacing / 2) * nextPieceObj.shape[0].length / 2, -(board.squareSize + board.spacing / 2) * nextPieceObj.shape.length / 2);
 
-		screen.resetTransform();
-	}
-
-	function updateNextPiece(command) {
-		const nextPieceObj = pieces.find(element => element.name == command.nextPiece.name);
-		const size = {
-			w: (4 * boardBackground.squareSize) + ((2 + 4) * boardBackground.spacing),
-			h: (3 * boardBackground.squareSize) + ((2 + 3) * boardBackground.spacing)
-		}
-
-		screen.fillStyle = 'white';
-		screen.fillRoundRect(15, 55, size.w, size.h, 10);
-
-		screen.translate(15 + (size.w / 2), 55 + (size.h / 2));
-		screen.translate(-(boardBackground.squareSize + boardBackground.spacing / 2) * nextPieceObj.shape[0].length / 2, -(boardBackground.squareSize + boardBackground.spacing / 2) * nextPieceObj.shape.length / 2);
-
-		for (let line in nextPieceObj.shape) {
-			for (let collumn in nextPieceObj.shape[line]) {
-				if (nextPieceObj.shape[line][collumn] == 1) {
-					drawSingleSquare({ x: Number(collumn) * (boardBackground.squareSize + boardBackground.spacing), y: Number(line) * (boardBackground.squareSize + boardBackground.spacing) }, boardBackground.squareSize, nextPieceObj.color, 'black');
+			for (let line in nextPieceObj.shape) {
+				for (let collumn in nextPieceObj.shape[line]) {
+					if (nextPieceObj.shape[line][collumn] == 1) {
+						drawSingleSquare({ x: Number(collumn) * (board.squareSize + board.spacing), y: Number(line) * (board.squareSize + board.spacing) }, board.squareSize, nextPieceObj.color, board.borderColor);
+					}
 				}
 			}
+
+			screen.resetTransform();
 		}
 
-		nextPieceObj.shape.length
-
-		screen.resetTransform();
-	}
-
-	function updateBoard(command) {
-		let color;
-
-		screen.clearRect(boardBackground.position.x, boardBackground.position.y, boardBackground.width, boardBackground.height);
-		for (let line in command.state) {
-			for (let collumn in command.state[line]) {
-				if (!command.state[line].includes('empty')) {
-					color = 'white';
-				} else {
-					color = pieces.find(element => element.name == command.state[line][collumn]).color;
-				}
-
-				drawSquareFromPosition(collumn, line, color, 'black');
-			}
+		return {
+			update
 		}
 	}
-
+	
 	function drawSquareFromPosition(positionX, positionY, color, borderColor = null) {
 		let squarePosition = {
-			x: Number(positionX) * (boardBackground.squareSize + boardBackground.spacing) + (boardBackground.position.x + boardBackground.spacing),
-			y: Number(positionY) * (boardBackground.squareSize + boardBackground.spacing) + (boardBackground.position.y + boardBackground.spacing)
+			x: Number(positionX) * (board.squareSize + board.spacing) + (board.position.x + board.spacing),
+			y: Number(positionY) * (board.squareSize + board.spacing) + (board.position.y + board.spacing)
 		}
 
-		drawSingleSquare(squarePosition, boardBackground.squareSize, color, borderColor);
+		drawSingleSquare(squarePosition, board.squareSize, color, borderColor);
 	}
 
 	function drawSingleSquare(position, size, color, borderColor = null) {
@@ -150,6 +144,17 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			screen.strokeRect(position.x, position.y, size, size);
 		}
 	}
+
+	const board = drawBoardDiv();
+	const scoreDiv = drawScoreDiv();
+	const nextPieceDiv = drawNextPieceDiv();
+
+	function stateUpdate(command) {
+		board.update(command);
+		scoreDiv.update(command);
+		nextPieceDiv.update(command);
+	}
+
 
 	return {
 		stateUpdate
