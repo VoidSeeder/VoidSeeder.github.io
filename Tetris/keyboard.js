@@ -18,6 +18,8 @@ export default function newKeyboardListner(windowInput) {
 	function keyPressed(event) {
 		const key = event.key;
 
+		//console.log(key);
+
 		const acceptedKeys = {
 			ArrowUp() {
 				notifyAll('rotate');
@@ -30,6 +32,9 @@ export default function newKeyboardListner(windowInput) {
 			},
 			ArrowLeft() {
 				notifyAll('left');
+			},
+			Escape() {
+				notifyAll('menu');
 			}
 			// Backspace() {
 			// 	notifyAll('backspace');

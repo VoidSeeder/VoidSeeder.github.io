@@ -1,5 +1,7 @@
 //10x20
 
+import getPiecesWithEmpty from "./pieces.js";
+
 export default function newGame() {
 	const observers = [];
 
@@ -18,12 +20,19 @@ export default function newGame() {
 		collumnsAmount: 10
 	}
 
-	const state = new Array(boardSize.linesAmount);
-	let score = 0;
+	const game = {
+		score: 0,
+		donwSpeedMS: 500,
+		level: 1,
+		nextPiece: null,
+		holdedPiece: null
+	}
+
+	game.state = new Array(boardSize.linesAmount);
 
 	for (let line = 0; line < boardSize.linesAmount; line++) {
-		state[line] = new Array(boardSize.collumnsAmount);
-		state[line].fill('empty');
+		game.state[line] = new Array(boardSize.collumnsAmount);
+		game.state[line].fill('empty');
 	}
 
 	const initialPosition = {
@@ -194,114 +203,57 @@ export default function newGame() {
 		}
 	}
 
-	const pieces = [];
+	const piecesArray = getPiecesWithEmpty(false);
 
-	pieces.push({
-		name: 'O',
-		shape: [
-			[1, 1],
-			[1, 1]
-		]
-	});
-
-	pieces.push({
-		name: 'I',
-		shape: [
-			[1, 1, 1, 1]
-		]
-	});
-
-	pieces.push({
-		name: 'S',
-		shape: [
-			[0, 1, 1],
-			[1, 1, 0]
-		]
-	});
-
-	pieces.push({
-		name: 'Z',
-		shape: [
-			[1, 1, 0],
-			[0, 1, 1]
-		]
-	});
-
-	pieces.push({
-		name: 'L',
-		shape: [
-			[1, 0],
-			[1, 0],
-			[1, 1]
-		]
-	});
-
-	pieces.push({
-		name: 'J',
-		shape: [
-			[0, 1],
-			[0, 1],
-			[1, 1]
-		]
-	});
-
-	pieces.push({
-		name: 'T',
-		shape: [
-			[0, 1, 0],
-			[1, 1, 1]
-		]
-	});
-
-	let pieceNumber = Math.floor(Math.random() * pieces.length);
-	let activatedPiece = new Piece(pieces[pieceNumber].name, pieces[pieceNumber].shape);
+	let activatedPiece = generateNewPiece();
+	game.nextPiece = generateNewPiece();
 
 	function generateNewPiece() {
-		let pieceNumber = Math.floor(Math.random() * pieces.length);
-		return new Piece(pieces[pieceNumber].name, pieces[pieceNumber].shape);
+		let pieceNumber = Math.floor(Math.random() * piecesArray.length);
+		return new Piece(piecesArray[pieceNumber].name, piecesArray[pieceNumber].shape);
 	}
 
 	setInterval(() => {
-		activatedPiece.remove(state);
+		activatedPiece.remove(game.state);
 
-		if (activatedPiece.canMove(state, 'down')) {
+		if (activatedPiece.canMove(game.state, 'down')) {
 			activatedPiece.move('down');
 		} else {
-			activatedPiece.place(state);
-			score += getTurnScore(state);
-			activatedPiece = generateNewPiece();
-			console.log("score " + score);
+			activatedPiece.place(game.state);
+			game.score += getTurnScore(game.state);
+			activatedPiece = game.nextPiece;
+			game.nextPiece = generateNewPiece();
 		}
 
-		activatedPiece.place(state);
+		activatedPiece.place(game.state);
 
-		notifyAll({ state, score });
-	}, 500);
+		notifyAll(game);
+	}, game.donwSpeedMS);
 
 	function getInput(command) {
-		activatedPiece.remove(state);
+		activatedPiece.remove(game.state);
 
-		if (activatedPiece.canMove(state, command)) {
+		if (activatedPiece.canMove(game.state, command)) {
 			activatedPiece.move(command);
-			activatedPiece.place(state);
+			activatedPiece.place(game.state);
 
-			return notifyAll({ state });
+			return notifyAll(game);
 		}
 
 		if (command == 'rotate') {
-			if (activatedPiece.canRotate(state).answer) {
-				for(let counter = activatedPiece.canRotate(state).move; counter > 0; counter--) {
+			if (activatedPiece.canRotate(game.state).answer) {
+				for(let counter = activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
 					activatedPiece.move('left');
 				}
 				activatedPiece.rotate();
 			}
 
-			activatedPiece.place(state);
+			activatedPiece.place(game.state);
 
-			return notifyAll({ state });
+			return notifyAll(game);
 		}
 
-		return activatedPiece.place(state);
+		return activatedPiece.place(game.state);
 	}
 
 	return {
