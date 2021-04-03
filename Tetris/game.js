@@ -1,5 +1,6 @@
 //10x20
 
+import mapping from "./mapping.js";
 import getPiecesWithEmpty from "./pieces.js";
 
 export default function newGame() {
@@ -22,8 +23,13 @@ export default function newGame() {
 
 	const game = {
 		score: 0,
-		donwSpeedMS: 500,
-		level: 1,
+		donwSpeedMS: 1000,
+		level: {
+			current: 1,
+			min: 1,
+			max: 30
+		},
+		linesCounter: 0,
 		activatedPiece: null,
 		nextPiece: null,
 		canHold: true,
@@ -74,7 +80,7 @@ export default function newGame() {
 		return newMatrix;
 	}
 
-	function genericVerifyNextStep(gameObj, shape, position) {
+	function genericVerifyNextStep(stateObj, shape, position) {
 		for (let line in shape) {
 			for (let collumn in shape[line]) {
 				if (position.line + Number(line) < 0 || position.line + Number(line) > boardSize.linesAmount - 1) {
@@ -85,7 +91,7 @@ export default function newGame() {
 					return false;
 				}
 
-				let positionToAnalaise = gameObj[position.line + Number(line)][position.collumn + Number(collumn)];
+				let positionToAnalaise = stateObj[position.line + Number(line)][position.collumn + Number(collumn)];
 
 				if (shape[line][collumn] == 1 && positionToAnalaise != 'empty') {
 					return false;
@@ -96,26 +102,48 @@ export default function newGame() {
 		return true;
 	}
 
-	function removeLine(gameObj, lineNumber) {
+	function removeLine(stateObj, lineNumber) {
 		for (let line = lineNumber; line > 0; line--) {
-			gameObj[line] = [].concat(gameObj[Number(line) - 1]);
+			stateObj[line] = [].concat(stateObj[Number(line) - 1]);
 		}
 
-		gameObj[0].fill('empty');
+		stateObj[0].fill('empty');
+	}
+
+	function levelUp(gameObj) {
+		if (gameObj.level.current < gameObj.level.max) {
+			gameObj.level.current += 1;
+			gameObj.linesCounter -= 10;
+
+			gameObj.donwSpeedMS = mapping(
+				gameObj.level.current,
+				gameObj.level.min,
+				gameObj.level.max,
+				1000,
+				50
+			);
+		}
+	}
+
+	function updateInterval(intervalID, callback, timeMS) {
+		clearInterval(intervalID);
+		return setInterval(callback, timeMS);
 	}
 
 	function getTurnScore(gameObj) {
 		let scoreTypes = [0, 40, 100, 300, 1200];
 		let linesRemoved = 0;
 
-		for (let line in gameObj) {
-			if (!gameObj[line].includes('empty')) {
+		for (let line in gameObj.state) {
+			if (!gameObj.state[line].includes('empty')) {
 				linesRemoved += 1;
-				removeLine(gameObj, line);
+				removeLine(gameObj.state, line);
 			}
 		}
 
-		return scoreTypes[linesRemoved];
+		gameObj.linesCounter += linesRemoved;
+
+		return gameObj.level.current * scoreTypes[linesRemoved];
 	}
 
 	function Piece(name, shape) {
@@ -129,20 +157,20 @@ export default function newGame() {
 			this.position.line = initialPosition.line;
 			this.position.collumn = initialPosition.collumn + 1 - Math.floor(this.shape[0].length / 2);
 		}
-		this.place = function (gameObj) {
+		this.place = function (stateObj) {
 			for (let line in this.shape) {
 				for (let collumn in this.shape[line]) {
 					if (this.shape[line][collumn] == 1) {
-						gameObj[this.position.line + Number(line)][this.position.collumn + Number(collumn)] = this.name;
+						stateObj[this.position.line + Number(line)][this.position.collumn + Number(collumn)] = this.name;
 					}
 				}
 			}
 		}
-		this.remove = function (gameObj) {
+		this.remove = function (stateObj) {
 			for (let line in this.shape) {
 				for (let collumn in this.shape[line]) {
 					if (this.shape[line][collumn] == 1) {
-						gameObj[this.position.line + Number(line)][this.position.collumn + Number(collumn)] = 'empty';
+						stateObj[this.position.line + Number(line)][this.position.collumn + Number(collumn)] = 'empty';
 					}
 				}
 			}
@@ -167,22 +195,22 @@ export default function newGame() {
 		this.rotate = function () {
 			this.shape = genericRotate(this.shape);
 		}
-		this.canMove = function (gameObj, direction) {
+		this.canMove = function (stateObj, direction) {
 			const movesToTry = {
 				right(pieceObj) {
-					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+					return genericVerifyNextStep(stateObj, pieceObj.shape, {
 						line: pieceObj.position.line,
 						collumn: pieceObj.position.collumn + 1
 					});
 				},
 				left(pieceObj) {
-					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+					return genericVerifyNextStep(stateObj, pieceObj.shape, {
 						line: pieceObj.position.line,
 						collumn: pieceObj.position.collumn - 1
 					});
 				},
 				down(pieceObj) {
-					return genericVerifyNextStep(gameObj, pieceObj.shape, {
+					return genericVerifyNextStep(stateObj, pieceObj.shape, {
 						line: pieceObj.position.line + 1,
 						collumn: pieceObj.position.collumn
 					});
@@ -195,12 +223,12 @@ export default function newGame() {
 
 			return false;
 		}
-		this.canRotate = function (gameObj) {
+		this.canRotate = function (stateObj) {
 			for (let width in this.shape) {
 				if (this.position.collumn - Number(width) < 0) {
 					return { answer: false };
 				}
-				if (genericVerifyNextStep(gameObj, genericRotate(this.shape), { line: this.position.line, collumn: this.position.collumn - Number(width) })) {
+				if (genericVerifyNextStep(stateObj, genericRotate(this.shape), { line: this.position.line, collumn: this.position.collumn - Number(width) })) {
 					return { answer: true, move: Number(width) };
 				}
 			}
@@ -219,14 +247,16 @@ export default function newGame() {
 		return new Piece(piecesArray[pieceNumber].name, piecesArray[pieceNumber].shape);
 	}
 
-	setInterval(() => {
+	let intervalID = setInterval(fallPiece, game.donwSpeedMS);
+
+	function fallPiece() {
 		game.activatedPiece.remove(game.state);
 
 		if (game.activatedPiece.canMove(game.state, 'down')) {
 			game.activatedPiece.move('down');
 		} else {
 			game.activatedPiece.place(game.state);
-			game.score += getTurnScore(game.state);
+			game.score += getTurnScore(game);
 			game.activatedPiece = game.nextPiece;
 			game.nextPiece = generateNewPiece();
 			game.canHold = true;
@@ -234,10 +264,19 @@ export default function newGame() {
 
 		game.activatedPiece.place(game.state);
 
+		if (game.linesCounter >= 10) {
+			levelUp(game, intervalID);
+			intervalID = updateInterval(intervalID, fallPiece, game.donwSpeedMS);
+		}
+
 		notifyAll(game);
-	}, game.donwSpeedMS);
+	}
 
 	function getInput(command) {
+		if(command == 'down') {
+			return fallPiece();		
+		}
+
 		game.activatedPiece.remove(game.state);
 
 		if (game.activatedPiece.canMove(game.state, command)) {

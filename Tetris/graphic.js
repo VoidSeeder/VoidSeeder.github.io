@@ -45,9 +45,10 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		return board
 	}
 
-	function drawScoreDiv() {
+	function drawScoreAndLevelDiv() {
+		//score
 		screen.fillStyle = 'blue';
-		screen.fillRoundRect((3 * canvas.width / 4) + 30, 30, 130, 80, 10);
+		screen.fillRoundRect((3 * canvas.width / 4) + 30, 30, 130, 120, 10);
 		screen.fillStyle = 'white';
 		screen.fillRoundRect((3 * canvas.width / 4) + 35, 75, 120, 30, 10);
 
@@ -64,7 +65,25 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 
 		screen.resetTransform();
 
+		//level
+		screen.fillStyle = 'white';
+		screen.fillRoundRect((3 * canvas.width / 4) + 35 + 70, 50 + 60, 50, 30, 10);
+
+		screen.textBaseline = 'middle';
+		screen.textAlign = 'center';
+		screen.translate((3 * canvas.width / 4), 30 + 75);
+		screen.font = `bolder 20px Courier New`
+		screen.fillText('LEVEL', 130 / 2, 50 / 2);
+
+		screen.fillStyle = 'blue'
+		screen.textAlign = 'right';
+		screen.font = `bold 20px Arial`
+		screen.fillText('0', 150, 10 + 25 / 2);
+
+		screen.resetTransform();
+
 		function update(command) {
+			//score
 			screen.fillStyle = 'white';
 			screen.fillRoundRect((3 * canvas.width / 4) + 35, 75, 120, 30, 10);
 
@@ -74,6 +93,19 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			screen.font = `bold 20px Arial`
 			screen.translate((3 * canvas.width / 4) + 30, 30);
 			screen.fillText(`${command.score}`, 130 - 10, 50 + 25 / 2);
+
+			screen.resetTransform();
+
+			//level
+			screen.fillStyle = 'white';
+			screen.fillRoundRect((3 * canvas.width / 4) + 35 + 70, 50 + 60, 50, 30, 10);
+
+			screen.textBaseline = 'middle';
+			screen.fillStyle = 'blue'
+			screen.textAlign = 'right';
+			screen.font = `bold 20px Arial`
+			screen.translate((3 * canvas.width / 4), 30 + 75);
+			screen.fillText(`${command.level.current}`, 150, 10 + 25 / 2);
 
 			screen.resetTransform();
 		}
@@ -147,8 +179,8 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		function update(command) {
 			screen.fillStyle = 'white';
 			screen.fillRoundRect(15, 55 + 200 - 10, size.w, size.h, 10);
-			
-			if(command.holdedPiece == null) {
+
+			if (command.holdedPiece == null) {
 				return
 			}
 
@@ -172,7 +204,8 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			update
 		}
 	}
-	
+
+
 	function drawSquareFromPosition(positionX, positionY, color, borderColor = null) {
 		let squarePosition = {
 			x: Number(positionX) * (board.squareSize + board.spacing) + (board.position.x + board.spacing),
@@ -193,13 +226,13 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 	}
 
 	const board = drawBoardDiv();
-	const scoreDiv = drawScoreDiv();
+	const scoreAndLevelDiv = drawScoreAndLevelDiv();
 	const nextPieceDiv = drawNextPieceDiv();
 	const holdedPieceDiv = drawHoldedPieceDiv();
 
 	function stateUpdate(command) {
 		board.update(command);
-		scoreDiv.update(command);
+		scoreAndLevelDiv.update(command);
 		nextPieceDiv.update(command);
 		holdedPieceDiv.update(command);
 	}

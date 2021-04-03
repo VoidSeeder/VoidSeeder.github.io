@@ -17,9 +17,7 @@ export default function newKeyboardListner(windowInput) {
 
 	function keyPressed(event) {
 		const key = event.key;
-
-		console.log(key);
-
+		
 		const acceptedKeys = {
 			ArrowUp() {
 				notifyAll('rotate');
