@@ -23,7 +23,11 @@ export default function newGame() {
 
 	const game = {
 		score: 0,
-		donwSpeedMS: 1000,
+		donwSpeedMS: {
+			current: 1000,
+			max: 1000,
+			min: 50
+		},
 		level: {
 			current: 1,
 			min: 1,
@@ -33,19 +37,48 @@ export default function newGame() {
 		activatedPiece: null,
 		nextPiece: null,
 		canHold: true,
-		holdedPiece: null
-	}
-
-	game.state = new Array(boardSize.linesAmount);
-
-	for (let line = 0; line < boardSize.linesAmount; line++) {
-		game.state[line] = new Array(boardSize.collumnsAmount);
-		game.state[line].fill('empty');
+		holdedPiece: null,
+		intervalID: null,
+		menu: {
+			isActive: false,
+			options: ["Back to game", "Restart"],
+			selectedOption: 0
+		}
 	}
 
 	const initialPosition = {
 		line: 0,
 		collumn: 4
+	}
+
+	const piecesArray = getPiecesWithEmpty(false);
+
+	function startNewGame() {
+		if (game.intervalID) {
+			clearInterval(game.intervalID);
+		}
+
+		game.state = new Array(boardSize.linesAmount);
+
+		for (let line = 0; line < boardSize.linesAmount; line++) {
+			game.state[line] = new Array(boardSize.collumnsAmount);
+			game.state[line].fill('empty');
+		}
+
+		game.activatedPiece = generateNewPiece();
+		game.nextPiece = generateNewPiece();
+		game.donwSpeedMS.current = game.donwSpeedMS.max;
+		game.level.current = game.level.min;
+		game.score = 0;
+		game.linesCounter = 0;
+		game.canHold = true;
+		game.holdedPiece = null;
+		game.menu.isActive = false;
+
+		game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+
+		game.activatedPiece.place(game.state);
+		notifyAll(game);
 	}
 
 	function tranpose(matrix) {
@@ -115,12 +148,12 @@ export default function newGame() {
 			gameObj.level.current += 1;
 			gameObj.linesCounter -= 10;
 
-			gameObj.donwSpeedMS = mapping(
+			gameObj.donwSpeedMS.current = mapping(
 				gameObj.level.current,
 				gameObj.level.min,
 				gameObj.level.max,
-				1000,
-				50
+				gameObj.donwSpeedMS.max,
+				gameObj.donwSpeedMS.min
 			);
 		}
 	}
@@ -237,90 +270,143 @@ export default function newGame() {
 		}
 	}
 
-	const piecesArray = getPiecesWithEmpty(false);
-
-	game.activatedPiece = generateNewPiece();
-	game.nextPiece = generateNewPiece();
-
 	function generateNewPiece() {
 		let pieceNumber = Math.floor(Math.random() * piecesArray.length);
 		return new Piece(piecesArray[pieceNumber].name, piecesArray[pieceNumber].shape);
 	}
 
-	let intervalID = setInterval(fallPiece, game.donwSpeedMS);
+	function fallPiece(gameObj) {
+		gameObj.activatedPiece.remove(gameObj.state);
 
-	function fallPiece() {
-		game.activatedPiece.remove(game.state);
-
-		if (game.activatedPiece.canMove(game.state, 'down')) {
-			game.activatedPiece.move('down');
+		if (gameObj.activatedPiece.canMove(gameObj.state, 'down')) {
+			gameObj.activatedPiece.move('down');
 		} else {
-			game.activatedPiece.place(game.state);
-			game.score += getTurnScore(game);
-			game.activatedPiece = game.nextPiece;
-			game.nextPiece = generateNewPiece();
-			game.canHold = true;
+			gameObj.activatedPiece.place(gameObj.state);
+			gameObj.score += getTurnScore(gameObj);
+			gameObj.activatedPiece = gameObj.nextPiece;
+			gameObj.nextPiece = generateNewPiece();
+			gameObj.canHold = true;
 		}
 
-		game.activatedPiece.place(game.state);
+		gameObj.activatedPiece.place(gameObj.state);
 
-		if (game.linesCounter >= 10) {
-			levelUp(game, intervalID);
-			intervalID = updateInterval(intervalID, fallPiece, game.donwSpeedMS);
+		if (gameObj.linesCounter >= 10) {
+			levelUp(gameObj);
+			gameObj.intervalID = updateInterval(gameObj.intervalID, fallPiece, gameObj.donwSpeedMS.current);
 		}
 
-		notifyAll(game);
+		notifyAll(gameObj);
 	}
 
 	function getInput(command) {
-		if(command == 'down') {
-			return fallPiece();		
-		}
-
-		game.activatedPiece.remove(game.state);
-
-		if (game.activatedPiece.canMove(game.state, command)) {
-			game.activatedPiece.move(command);
-			game.activatedPiece.place(game.state);
-
-			return notifyAll(game);
-		}
-
-		if (command == 'rotate') {
-			if (game.activatedPiece.canRotate(game.state).answer) {
-				for (let counter = game.activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
-					game.activatedPiece.move('left');
+		const acceptedInputs = {
+			down() {
+				if (game.menu.isActive) {
+					if(game.menu.selectedOption < game.menu.options.length - 1) {
+						game.menu.selectedOption += 1;
+					}
+					console.log(game.menu.options[game.menu.selectedOption]);
+				} else {
+					fallPiece(game);
 				}
-				game.activatedPiece.rotate();
+			},
+			up() {
+				if (game.menu.isActive) {
+					if (game.menu.selectedOption > 0) {
+						game.menu.selectedOption -= 1;
+					}
+					console.log(game.menu.options[game.menu.selectedOption]);
+				} else {
+					//rotate
+					game.activatedPiece.remove(game.state);
+
+					if (game.activatedPiece.canRotate(game.state).answer) {
+						for (let counter = game.activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
+							game.activatedPiece.move('left');
+						}
+						game.activatedPiece.rotate();
+					}
+
+					game.activatedPiece.place(game.state);
+
+					notifyAll(game);
+				}
+			},
+			right() {
+				game.activatedPiece.remove(game.state);
+
+				if (game.activatedPiece.canMove(game.state, command)) {
+					game.activatedPiece.move(command);
+				}
+
+				game.activatedPiece.place(game.state);
+				notifyAll(game);
+			},
+			left() {
+				game.activatedPiece.remove(game.state);
+
+				if (game.activatedPiece.canMove(game.state, command)) {
+					game.activatedPiece.move(command);
+				}
+
+				game.activatedPiece.place(game.state);
+				notifyAll(game);
+			},
+			control() {
+				//hold
+				if (game.canHold) {
+					game.canHold = false;
+
+					game.activatedPiece.remove(game.state);
+					game.activatedPiece.reset();
+
+					if (game.holdedPiece == null) {
+						game.holdedPiece = game.activatedPiece;
+						game.activatedPiece = game.nextPiece;
+						game.nextPiece = generateNewPiece();
+					} else {
+						let auxiliarPiece = game.holdedPiece;
+						game.holdedPiece = game.activatedPiece;
+						game.activatedPiece = auxiliarPiece;
+					}
+
+					game.activatedPiece.place(game.state);
+
+					notifyAll(game);
+				}
+			},
+			escape() {
+				//pause menu
+				game.menu.isActive = !game.menu.isActive;
+				console.log(`paused: ${game.menu.isActive}`);
+
+				if(game.menu.isActive) {
+					clearInterval(game.intervalID);
+				} else {
+					game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+				}
+			},
+			enter() {
+				if (game.menu.isActive) {
+					const option = game.menu.options[game.menu.selectedOption];
+					
+					if(option == "Restart") {
+						startNewGame();
+					}
+
+					if(option == "Back to game") {
+						game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+					}
+				}
 			}
-
-			game.activatedPiece.place(game.state);
-
-			return notifyAll(game);
 		}
 
-		if (command == 'hold' && game.canHold) {
-			game.canHold = false;
-
-			game.activatedPiece.reset();
-
-			if (game.holdedPiece == null) {
-				game.holdedPiece = game.activatedPiece;
-				game.activatedPiece = game.nextPiece;
-				game.nextPiece = generateNewPiece();
-			} else {
-				let auxiliarPiece = game.holdedPiece;
-				game.holdedPiece = game.activatedPiece;
-				game.activatedPiece = auxiliarPiece;
-			}
-
-			game.activatedPiece.place(game.state);
-
-			return notifyAll(game);
+		if (acceptedInputs[command]) {
+			acceptedInputs[command]();
 		}
-
-		return game.activatedPiece.place(game.state);
 	}
+
+	startNewGame();
 
 	return {
 		subscribe,

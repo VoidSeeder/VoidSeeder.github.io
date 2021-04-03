@@ -16,39 +16,14 @@ export default function newKeyboardListner(windowInput) {
 	windowInput.document.addEventListener("keydown", keyPressed);
 
 	function keyPressed(event) {
-		const key = event.key;
-		
-		const acceptedKeys = {
-			ArrowUp() {
-				notifyAll('rotate');
-			},
-			ArrowDown() {
-				notifyAll('down');
-			},
-			ArrowRight() {
-				notifyAll('right');
-			},
-			ArrowLeft() {
-				notifyAll('left');
-			},
-			Escape() {
-				notifyAll('menu');
-			},
-			Control() {
-				notifyAll('hold');
-			}
-			// Backspace() {
-			// 	notifyAll('backspace');
-			// },
-			// Enter() {
-			// 	notifyAll('enter');
-			// }
+		let key = event.key;
+
+		if(key.includes('Arrow')) {
+			key = key.substring(5);
+			// console.log(key);
 		}
 
-		if (acceptedKeys[key]) {
-			event.preventDefault();
-			acceptedKeys[key]();
-		}
+		notifyAll(key.toLowerCase());
 	}
 
 	return {
