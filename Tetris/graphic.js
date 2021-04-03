@@ -125,6 +125,53 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			update
 		}
 	}
+
+	function drawHoldedPieceDiv() {
+		const size = {
+			w: (4 * board.squareSize) + ((2 + 4) * board.spacing),
+			h: (3 * board.squareSize) + ((2 + 3) * board.spacing)
+		}
+
+		screen.fillStyle = 'blue';
+		screen.fillRoundRect(10, 200, size.w + 10, size.h + 10 + 40, 10);
+
+		screen.fillStyle = 'white';
+		screen.textBaseline = 'middle';
+		screen.textAlign = 'center';
+		screen.translate(10, 200);
+		screen.font = `bolder 20px Courier New`
+		screen.fillText('HOLDED PIECE', (size.w + 10) / 2, 50 / 2);
+
+		screen.resetTransform();
+
+		function update(command) {
+			screen.fillStyle = 'white';
+			screen.fillRoundRect(15, 55 + 200 - 10, size.w, size.h, 10);
+			
+			if(command.holdedPiece == null) {
+				return
+			}
+
+			const holdedPieceObj = board.pieces.find(element => element.name == command.holdedPiece.name);
+
+			screen.translate(15 + (size.w / 2), 55 + 200 - 10 + (size.h / 2));
+			screen.translate(-(board.squareSize + board.spacing / 2) * holdedPieceObj.shape[0].length / 2, -(board.squareSize + board.spacing / 2) * holdedPieceObj.shape.length / 2);
+
+			for (let line in holdedPieceObj.shape) {
+				for (let collumn in holdedPieceObj.shape[line]) {
+					if (holdedPieceObj.shape[line][collumn] == 1) {
+						drawSingleSquare({ x: Number(collumn) * (board.squareSize + board.spacing), y: Number(line) * (board.squareSize + board.spacing) }, board.squareSize, holdedPieceObj.color, board.borderColor);
+					}
+				}
+			}
+
+			screen.resetTransform();
+		}
+
+		return {
+			update
+		}
+	}
 	
 	function drawSquareFromPosition(positionX, positionY, color, borderColor = null) {
 		let squarePosition = {
@@ -148,11 +195,13 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 	const board = drawBoardDiv();
 	const scoreDiv = drawScoreDiv();
 	const nextPieceDiv = drawNextPieceDiv();
+	const holdedPieceDiv = drawHoldedPieceDiv();
 
 	function stateUpdate(command) {
 		board.update(command);
 		scoreDiv.update(command);
 		nextPieceDiv.update(command);
+		holdedPieceDiv.update(command);
 	}
 
 

@@ -24,7 +24,9 @@ export default function newGame() {
 		score: 0,
 		donwSpeedMS: 500,
 		level: 1,
+		activatedPiece: null,
 		nextPiece: null,
+		canHold: true,
 		holdedPiece: null
 	}
 
@@ -123,6 +125,10 @@ export default function newGame() {
 			line: initialPosition.line,
 			collumn: initialPosition.collumn + 1 - Math.floor(this.shape[0].length / 2)
 		}
+		this.reset = function () {
+			this.position.line = initialPosition.line;
+			this.position.collumn = initialPosition.collumn + 1 - Math.floor(this.shape[0].length / 2);
+		}
 		this.place = function (gameObj) {
 			for (let line in this.shape) {
 				for (let collumn in this.shape[line]) {
@@ -205,7 +211,7 @@ export default function newGame() {
 
 	const piecesArray = getPiecesWithEmpty(false);
 
-	let activatedPiece = generateNewPiece();
+	game.activatedPiece = generateNewPiece();
 	game.nextPiece = generateNewPiece();
 
 	function generateNewPiece() {
@@ -214,46 +220,67 @@ export default function newGame() {
 	}
 
 	setInterval(() => {
-		activatedPiece.remove(game.state);
+		game.activatedPiece.remove(game.state);
 
-		if (activatedPiece.canMove(game.state, 'down')) {
-			activatedPiece.move('down');
+		if (game.activatedPiece.canMove(game.state, 'down')) {
+			game.activatedPiece.move('down');
 		} else {
-			activatedPiece.place(game.state);
+			game.activatedPiece.place(game.state);
 			game.score += getTurnScore(game.state);
-			activatedPiece = game.nextPiece;
+			game.activatedPiece = game.nextPiece;
 			game.nextPiece = generateNewPiece();
+			game.canHold = true;
 		}
 
-		activatedPiece.place(game.state);
+		game.activatedPiece.place(game.state);
 
 		notifyAll(game);
 	}, game.donwSpeedMS);
 
 	function getInput(command) {
-		activatedPiece.remove(game.state);
+		game.activatedPiece.remove(game.state);
 
-		if (activatedPiece.canMove(game.state, command)) {
-			activatedPiece.move(command);
-			activatedPiece.place(game.state);
+		if (game.activatedPiece.canMove(game.state, command)) {
+			game.activatedPiece.move(command);
+			game.activatedPiece.place(game.state);
 
 			return notifyAll(game);
 		}
 
 		if (command == 'rotate') {
-			if (activatedPiece.canRotate(game.state).answer) {
-				for(let counter = activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
-					activatedPiece.move('left');
+			if (game.activatedPiece.canRotate(game.state).answer) {
+				for (let counter = game.activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
+					game.activatedPiece.move('left');
 				}
-				activatedPiece.rotate();
+				game.activatedPiece.rotate();
 			}
 
-			activatedPiece.place(game.state);
+			game.activatedPiece.place(game.state);
 
 			return notifyAll(game);
 		}
 
-		return activatedPiece.place(game.state);
+		if (command == 'hold' && game.canHold) {
+			game.canHold = false;
+
+			game.activatedPiece.reset();
+
+			if (game.holdedPiece == null) {
+				game.holdedPiece = game.activatedPiece;
+				game.activatedPiece = game.nextPiece;
+				game.nextPiece = generateNewPiece();
+			} else {
+				let auxiliarPiece = game.holdedPiece;
+				game.holdedPiece = game.activatedPiece;
+				game.activatedPiece = auxiliarPiece;
+			}
+
+			game.activatedPiece.place(game.state);
+
+			return notifyAll(game);
+		}
+
+		return game.activatedPiece.place(game.state);
 	}
 
 	return {

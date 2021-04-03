@@ -18,7 +18,7 @@ export default function newKeyboardListner(windowInput) {
 	function keyPressed(event) {
 		const key = event.key;
 
-		//console.log(key);
+		console.log(key);
 
 		const acceptedKeys = {
 			ArrowUp() {
@@ -35,6 +35,9 @@ export default function newKeyboardListner(windowInput) {
 			},
 			Escape() {
 				notifyAll('menu');
+			},
+			Control() {
+				notifyAll('hold');
 			}
 			// Backspace() {
 			// 	notifyAll('backspace');
