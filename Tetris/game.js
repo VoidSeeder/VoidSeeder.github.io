@@ -328,8 +328,6 @@ export default function newGame() {
 					}
 
 					game.activatedPiece.place(game.state);
-
-					notifyAll(game);
 				}
 			},
 			right() {
@@ -340,7 +338,6 @@ export default function newGame() {
 				}
 
 				game.activatedPiece.place(game.state);
-				notifyAll(game);
 			},
 			left() {
 				game.activatedPiece.remove(game.state);
@@ -350,7 +347,6 @@ export default function newGame() {
 				}
 
 				game.activatedPiece.place(game.state);
-				notifyAll(game);
 			},
 			control() {
 				//hold
@@ -371,8 +367,6 @@ export default function newGame() {
 					}
 
 					game.activatedPiece.place(game.state);
-
-					notifyAll(game);
 				}
 			},
 			escape() {
@@ -392,10 +386,12 @@ export default function newGame() {
 					
 					if(option == "Restart") {
 						startNewGame();
+						game.menu.isActive = false;
 					}
 
 					if(option == "Back to game") {
 						game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+						game.menu.isActive = false;
 					}
 				}
 			}
@@ -403,6 +399,7 @@ export default function newGame() {
 
 		if (acceptedInputs[command]) {
 			acceptedInputs[command]();
+			notifyAll(game);
 		}
 	}
 
