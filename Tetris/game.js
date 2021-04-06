@@ -75,7 +75,7 @@ export default function newGame() {
 		game.holdedPiece = null;
 		game.menu.isActive = false;
 
-		game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+		game.intervalID = updateInterval(game, fallPiece);
 
 		game.activatedPiece.place(game.state);
 		notifyAll(game);
@@ -158,9 +158,9 @@ export default function newGame() {
 		}
 	}
 
-	function updateInterval(intervalID, callback, timeMS) {
-		clearInterval(intervalID);
-		return setInterval(callback, timeMS);
+	function updateInterval(gameObj, callback) {
+		clearInterval(gameObj.intervalID);
+		return setInterval(callback, gameObj.donwSpeedMS.current, gameObj);
 	}
 
 	function getTurnScore(gameObj) {
@@ -292,7 +292,7 @@ export default function newGame() {
 
 		if (gameObj.linesCounter >= 10) {
 			levelUp(gameObj);
-			gameObj.intervalID = updateInterval(gameObj.intervalID, fallPiece, gameObj.donwSpeedMS.current);
+			gameObj.intervalID = updateInterval(gameObj, fallPiece);
 		}
 
 		notifyAll(gameObj);
@@ -377,7 +377,7 @@ export default function newGame() {
 				if(game.menu.isActive) {
 					clearInterval(game.intervalID);
 				} else {
-					game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+					game.intervalID = updateInterval(game, fallPiece);
 				}
 			},
 			enter() {
@@ -390,7 +390,7 @@ export default function newGame() {
 					}
 
 					if(option == "Back to game") {
-						game.intervalID = setInterval(fallPiece, game.donwSpeedMS.current, game);
+						game.intervalID = updateInterval(game, fallPiece);
 						game.menu.isActive = false;
 					}
 				}
