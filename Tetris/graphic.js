@@ -289,6 +289,70 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		}
 	}
 
+	function drawMenu(boardObj, command) {
+		screen.fillStyle = `rgba(255, 255, 255, ${0.5})`;
+		screen.fillRect(boardObj.position.x, boardObj.position.y, boardObj.width, boardObj.height);
+
+		screen.translate(boardObj.position.x + boardObj.width / 2, boardObj.position.y + boardObj.height / 2);
+
+		screen.fillStyle = 'blue';
+
+		const menuButtons = {
+			size: {
+				width: 250,
+				height: 80,
+				radius: 20,
+				spacing: 20
+			},
+			initialPosition: {}
+		}
+
+		const optionsAmount = command.menu.options.length;
+
+		menuButtons.initialPosition.x = -menuButtons.size.width / 2;
+		menuButtons.initialPosition.y = -(optionsAmount * menuButtons.size.height + (optionsAmount - 1) * menuButtons.size.spacing) / 2;
+
+		for (let optionPosition in command.menu.options) {
+			if (command.menu.selectedOption == Number(optionPosition)) {
+				screen.fillStyle = 'green';
+				screen.fillRoundRect(
+					menuButtons.initialPosition.x - 10,
+					menuButtons.initialPosition.y + Number(optionPosition) * (menuButtons.size.height + menuButtons.size.spacing) - 10,
+					menuButtons.size.width + 20,
+					menuButtons.size.height + 20,
+					menuButtons.size.radius
+				);
+			}
+
+			screen.fillStyle = 'blue';
+			screen.fillRoundRect(
+				menuButtons.initialPosition.x,
+				menuButtons.initialPosition.y + Number(optionPosition) * (menuButtons.size.height + menuButtons.size.spacing),
+				menuButtons.size.width,
+				menuButtons.size.height,
+				menuButtons.size.radius
+			);
+
+			screen.translate(
+				0,
+				menuButtons.initialPosition.y + Number(optionPosition) * (menuButtons.size.height + menuButtons.size.spacing) + menuButtons.size.height / 2
+			)
+
+			screen.fillStyle = 'white';
+			screen.textBaseline = 'middle';
+			screen.textAlign = 'center';
+			screen.font = `bolder 36px Courier New`
+			screen.fillText(command.menu.options[optionPosition], 0, 0, menuButtons.size.width - 20);
+
+			screen.translate(
+				0,
+				-(menuButtons.initialPosition.y + Number(optionPosition) * (menuButtons.size.height + menuButtons.size.spacing) + menuButtons.size.height / 2)
+			)
+		}
+
+		screen.resetTransform();
+	}
+
 	const board = drawBoardDiv();
 	const scoreAndLevelDiv = drawScoreAndLevelDiv();
 	const nextPieceDiv = drawNextPieceDiv();
@@ -301,6 +365,8 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			scoreAndLevelDiv.level.erase();
 			nextPieceDiv.erase();
 			holdedPieceDiv.erase();
+
+			drawMenu(board, command);
 		} else {
 			board.update(command);
 			scoreAndLevelDiv.update(command);
