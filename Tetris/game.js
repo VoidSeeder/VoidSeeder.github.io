@@ -43,7 +43,8 @@ export default function newGame() {
 			isActive: false,
 			options: ["Back to game", "Restart"],
 			selectedOption: 0
-		}
+		},
+		isGameOver: false
 	}
 
 	const initialPosition = {
@@ -74,6 +75,7 @@ export default function newGame() {
 		game.canHold = true;
 		game.holdedPiece = null;
 		game.menu.isActive = false;
+		game.isGameOver = false;
 
 		game.intervalID = updateInterval(game, fallPiece);
 
@@ -275,11 +277,21 @@ export default function newGame() {
 		return new Piece(piecesArray[pieceNumber].name, piecesArray[pieceNumber].shape);
 	}
 
+	function verifyGameOver(gameObj) {
+		if (gameObj.activatedPiece.position.line == 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	function fallPiece(gameObj) {
 		gameObj.activatedPiece.remove(gameObj.state);
 
 		if (gameObj.activatedPiece.canMove(gameObj.state, 'down')) {
 			gameObj.activatedPiece.move('down');
+		} else if (verifyGameOver(gameObj)) {
+			gameObj.isGameOver = true;
 		} else {
 			gameObj.activatedPiece.place(gameObj.state);
 			gameObj.score += getTurnScore(gameObj);
@@ -302,10 +314,9 @@ export default function newGame() {
 		const acceptedInputs = {
 			down() {
 				if (game.menu.isActive) {
-					if(game.menu.selectedOption < game.menu.options.length - 1) {
+					if (game.menu.selectedOption < game.menu.options.length - 1) {
 						game.menu.selectedOption += 1;
 					}
-					console.log(game.menu.options[game.menu.selectedOption]);
 				} else {
 					fallPiece(game);
 				}
@@ -315,9 +326,7 @@ export default function newGame() {
 					if (game.menu.selectedOption > 0) {
 						game.menu.selectedOption -= 1;
 					}
-					console.log(game.menu.options[game.menu.selectedOption]);
 				} else {
-					//rotate
 					game.activatedPiece.remove(game.state);
 
 					if (game.activatedPiece.canRotate(game.state).answer) {
@@ -349,7 +358,6 @@ export default function newGame() {
 				game.activatedPiece.place(game.state);
 			},
 			control() {
-				//hold
 				if (game.canHold) {
 					game.canHold = false;
 
@@ -370,26 +378,28 @@ export default function newGame() {
 				}
 			},
 			escape() {
-				//pause menu
 				game.menu.isActive = !game.menu.isActive;
-				console.log(`paused: ${game.menu.isActive}`);
 
-				if(game.menu.isActive) {
+				if (game.menu.isActive) {
 					clearInterval(game.intervalID);
 				} else {
 					game.intervalID = updateInterval(game, fallPiece);
 				}
 			},
 			enter() {
+				if (game.isGameOver) {
+					startNewGame();
+				}
+
 				if (game.menu.isActive) {
 					const option = game.menu.options[game.menu.selectedOption];
-					
-					if(option == "Restart") {
+
+					if (option == "Restart") {
 						startNewGame();
 						game.menu.isActive = false;
 					}
 
-					if(option == "Back to game") {
+					if (option == "Back to game") {
 						game.intervalID = updateInterval(game, fallPiece);
 						game.menu.isActive = false;
 					}

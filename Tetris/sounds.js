@@ -16,17 +16,18 @@ export default function newSound() {
 	function soundObserver (command) {
 		for (let line in command.state) {
 			if(!command.state[line].includes('empty')) {
-				soundEffects.fullLine.stop();
+				// soundEffects.fullLine.stop();
 				soundEffects.fullLine.play();
 				break;
 			}
 		}
 
 		if(command.score && command.score != lastScore) {
-			soundEffects.fullLine.stop();
+			// soundEffects.fullLine.stop();
 			soundEffects.scoreUpdate.play();
-			lastScore = command.score;
 		}
+
+		lastScore = command.score;
 	}
 
 	return {

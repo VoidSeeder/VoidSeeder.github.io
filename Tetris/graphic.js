@@ -353,6 +353,32 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 		screen.resetTransform();
 	}
 
+	function drawGameOver(boardObj, command) {
+		screen.fillStyle = `rgba(255, 255, 255, ${0.7})`;
+		screen.fillRect(boardObj.position.x, boardObj.position.y, boardObj.width, boardObj.height);
+
+		screen.translate(board.position.x + board.width / 2, 0);
+
+		screen.fillStyle = 'blue';
+		screen.textBaseline = 'middle';
+		screen.textAlign = 'center';
+
+		screen.font = `bolder 60px Courier New`;
+		screen.fillText('GAME OVER', 0, 100);
+
+		screen.font = `bolder 30px Courier New`
+		screen.fillText("YOUR SCORE", 0, 300);
+
+		screen.font = `bolder 60px Courier New`
+		screen.fillText(`${command.score}`, 0, 350);
+
+		screen.font = `bolder 30px Courier New`
+		screen.fillText("Press ENTER to", 0, 550);
+		screen.fillText("start a new game", 0, 585);
+
+		screen.resetTransform();
+	}
+
 	const board = drawBoardDiv();
 	const scoreAndLevelDiv = drawScoreAndLevelDiv();
 	const nextPieceDiv = drawNextPieceDiv();
@@ -372,6 +398,10 @@ export default function newGraphicCanvas(windowInput, canvasId) {
 			scoreAndLevelDiv.update(command);
 			nextPieceDiv.update(command);
 			holdedPieceDiv.update(command);
+
+			if (command.isGameOver) {
+				drawGameOver(board, command);
+			}
 		}
 	}
 
