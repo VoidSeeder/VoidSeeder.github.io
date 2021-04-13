@@ -311,33 +311,21 @@ export default function newGame() {
 	}
 
 	function getInput(command) {
-		const acceptedInputs = {
+		const runningInputs = {
 			down() {
-				if (game.menu.isActive) {
-					if (game.menu.selectedOption < game.menu.options.length - 1) {
-						game.menu.selectedOption += 1;
-					}
-				} else {
-					fallPiece(game);
-				}
+				fallPiece(game);
 			},
 			up() {
-				if (game.menu.isActive) {
-					if (game.menu.selectedOption > 0) {
-						game.menu.selectedOption -= 1;
-					}
-				} else {
-					game.activatedPiece.remove(game.state);
+				game.activatedPiece.remove(game.state);
 
-					if (game.activatedPiece.canRotate(game.state).answer) {
-						for (let counter = game.activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
-							game.activatedPiece.move('left');
-						}
-						game.activatedPiece.rotate();
+				if (game.activatedPiece.canRotate(game.state).answer) {
+					for (let counter = game.activatedPiece.canRotate(game.state).move; counter > 0; counter--) {
+						game.activatedPiece.move('left');
 					}
-
-					game.activatedPiece.place(game.state);
+					game.activatedPiece.rotate();
 				}
+
+				game.activatedPiece.place(game.state);
 			},
 			right() {
 				game.activatedPiece.remove(game.state);
@@ -385,32 +373,53 @@ export default function newGame() {
 				} else {
 					game.intervalID = updateInterval(game, fallPiece);
 				}
+			}
+		}
+
+		const menuInputs = {
+			down() {
+				if (game.menu.selectedOption < game.menu.options.length - 1) {
+					game.menu.selectedOption += 1;
+				}
+			},
+			up() {
+				if (game.menu.selectedOption > 0) {
+					game.menu.selectedOption -= 1;
+				}
+			},
+			escape() {
+				if (!game.isGameOver)
+					runningInputs.escape();
 			},
 			enter() {
 				if (game.isGameOver) {
 					startNewGame();
+					return;
 				}
 
-				if (game.menu.isActive) {
-					const option = game.menu.options[game.menu.selectedOption];
+				const option = game.menu.options[game.menu.selectedOption];
 
-					if (option == "Restart") {
-						startNewGame();
-						game.menu.isActive = false;
-					}
+				if (option == "Restart") {
+					startNewGame();
+					game.menu.isActive = false;
+				}
 
-					if (option == "Back to game") {
-						game.intervalID = updateInterval(game, fallPiece);
-						game.menu.isActive = false;
-					}
+				if (option == "Back to game") {
+					game.intervalID = updateInterval(game, fallPiece);
+					game.menu.isActive = false;
 				}
 			}
 		}
 
-		if (acceptedInputs[command]) {
-			acceptedInputs[command]();
-			notifyAll(game);
+		if (game.menu.isActive || game.isGameOver) {
+			if (menuInputs[command])
+				menuInputs[command]();
+		} else {
+			if (runningInputs[command])
+				runningInputs[command]();
 		}
+
+		notifyAll(game);
 	}
 
 	startNewGame();
